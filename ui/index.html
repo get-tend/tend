@@ -299,7 +299,7 @@ const date = (iso) => new Date(iso).toLocaleDateString('en-US', { month: 'short'
 const BADGE_SCRIPT = 'https://unpkg.com/gettend@1/badge/tend-badge.js';
 // Where the opt-in "Add to the shared total" button sends a purchase's amounts and proof links.
 const SHARED_TOTAL_URL = 'https://gettend.eco/api/total';
-const WAITLIST_URL = ''; // the waitlist form endpoint; see waitlist/apps-script.gs
+const WAITLIST_URL = 'https://script.google.com/macros/s/AKfycbx4coq78hs8QiSyUalpdvuObPZfAn6Cm-n4fZvZk0QKIbf1r2zQpLl3EUjhMxVtSeQq/exec'; // the Google Sheet's Apps Script web app; see waitlist/apps-script.gs in the site repo
 const toast = (msg) => { const t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => (t.hidden = true), 2600); };
 
 async function api(name, body) {
@@ -695,7 +695,7 @@ function wire(p) {
       email.setAttribute('aria-invalid', !ok); msg.classList.toggle('err', !ok);
       if (!ok) { msg.textContent = 'Enter an email address like name@example.com.'; email.focus(); return; }
       try {
-        if (WAITLIST_URL) await fetch(WAITLIST_URL, { method: 'POST', mode: 'no-cors', body: new URLSearchParams({ email: email.value.trim(), cadence: $('wlCadence').value, source: 'dashboard' }) });
+        if (WAITLIST_URL) await fetch(WAITLIST_URL, { method: 'POST', mode: 'no-cors', body: new URLSearchParams({ form: 'restore', email: email.value.trim(), cadence: $('wlCadence').value }) });
         wl.classList.add('done'); msg.textContent = "You're on the waitlist. We'll email you when one-click restore opens.";
         try { localStorage.setItem('tend.waitlist', '1'); } catch {}
       } catch { msg.classList.add('err'); msg.textContent = "That didn't go through. Check your connection and try again."; }
