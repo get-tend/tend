@@ -1,4 +1,4 @@
-# Publishes to npm when you publish a GitHub release (tag it v1.0.0, v1.0.1, ...).
+# Publishes to npm when you publish a GitHub release. Tag it with the package.json version: v1.0.2 (or 1.0.2).
 # Uses npm trusted publishing: no npm token is stored anywhere, and npm shows a provenance
 # badge linking each version to the exact commit and workflow run that built it.
 # One-time setup: on npmjs.com, open the gettend package > Settings > Trusted publishing,
@@ -23,5 +23,12 @@ jobs:
       - run: npm install -g npm@latest
       - run: npm test
       - name: Check the tag matches package.json
-        run: test "v$(node -p "require('./package.json').version")" = "${{ github.event.release.tag_name }}"
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          if [ "${TAG#v}" != "$version" ]; then
+            echo "::error::The release tag \"$TAG\" doesn't match package.json ($version). Tag the release v$version."
+            exit 1
+          fi
       - run: npm publish --provenance --access public

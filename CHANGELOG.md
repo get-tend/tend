@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.2
+
+- First release published from GitHub, with a provenance badge linking it to its commit. No changes to how Tend works.
+
 ## 1.0.1
 
 - The page responds right away when you pick a restore amount, and saves the choice in the background.

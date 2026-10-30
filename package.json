@@ -1,6 +1,6 @@
 {
   "name": "gettend-cli",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "See the energy, carbon and water behind your Claude Code tokens, and settle it with carbon removal and watershed restoration.",
   "type": "module",
   "bin": {
