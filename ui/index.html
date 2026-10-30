@@ -729,11 +729,23 @@ function wire(p) {
   if (!form) return;
   const q = p.quote;
   // The chosen option sets the amount; the slider splits it between carbon and water and fills in the form.
+  // Picking an option updates the amounts on the spot and saves the choice in the background.
+  let pl = plan(q, q.multiplier);
+  const split = $('splitRange');
+  const choose = (m) => {
+    pl = plan(q, m);
+    split.value = Math.round((pl.carbonUsd / pl.usd) * 100);
+    document.querySelectorAll('.opt[data-m]').forEach((o) => o.setAttribute('aria-pressed', Number(o.dataset.m) === m));
+    applySplit();
+  };
   document.querySelectorAll('.opt[data-m]').forEach((b) => b.addEventListener('click', async () => {
-    await api('track', { project: p.path, multiplier: Number(b.dataset.m), out: p.link.out });
-    await load();
+    const m = Number(b.dataset.m), before = q.multiplier;
+    if (m === before) return;
+    choose(m);
+    q.multiplier = m;
+    try { await api('track', { project: p.path, multiplier: m, out: p.link.out }); }
+    catch (e) { q.multiplier = before; choose(before); toast(`Couldn't save that: ${e.message}`); }
   }));
-  const pl = plan(q, q.multiplier), split = $('splitRange');
   split.value = Math.round((pl.carbonUsd / pl.usd) * 100);
   const applySplit = () => {
     const share = split.value / 100, cUsd = pl.usd * share, wUsd = pl.usd - cUsd;

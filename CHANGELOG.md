@@ -1,6 +1,12 @@
 # Changelog
 
-## 1.0.0 (unreleased)
+## 1.0.1
+
+- The page responds right away when you pick a restore amount, and saves the choice in the background.
+- The page reuses its last scan until a Claude Code log changes, so it reloads in a moment instead of several seconds.
+- Placeholder "<synthetic>" entries Claude Code writes for interrupted or failed requests no longer show as a model.
+
+## 1.0.0
 
 First release.
 
