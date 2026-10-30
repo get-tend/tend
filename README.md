@@ -3,7 +3,7 @@
 See the energy, carbon and water behind your Claude Code tokens, then settle it with carbon removal and watershed restoration. Show what you restored with a badge on your site.
 
 ```bash
-npx gettend
+npx gettend-cli
 ```
 
 That opens the Tend page in your browser. From there:
@@ -20,7 +20,7 @@ Requires [Node.js](https://nodejs.org) 18 or newer, and Claude Code.
 - **Sends nothing anywhere on its own.** `npm test` runs every command and the page with network access blocked, and fails if Tend tries to reach the internet. The one exception is a button you click: "Add to the shared total" on a purchase with proof sends that purchase's amounts and proof link to gettend.eco, and nothing else.
 - **Asks before changing anything.** Turning on automatic updates shows the exact change to your Claude Code settings first.
 - **Published from GitHub.** Each npm version carries a provenance badge linking it to the commit that built it.
-- **Try it read-only first.** `npx gettend status` only reads your logs and prints a table.
+- **Try it read-only first.** `npx gettend-cli status` only reads your logs and prints a table.
 
 Found a problem? See [SECURITY.md](SECURITY.md).
 
@@ -34,8 +34,8 @@ Found a problem? See [SECURITY.md](SECURITY.md).
 ## Keep Tend available (macOS)
 
 ```bash
-npx gettend service on    # Tend runs quietly in the background, so you can bookmark http://127.0.0.1:4317
-npx gettend service off
+npx gettend-cli service on    # Tend runs quietly in the background, so you can bookmark http://127.0.0.1:4317
+npx gettend-cli service off
 ```
 
 This adds a login item (`~/Library/LaunchAgents/eco.gettend.ui.plist`) that runs Tend's copy in `~/.tend/app`. The page offers the same switch.
@@ -46,18 +46,18 @@ A recorded purchase counts toward "restored" on your badge only when it has a ce
 
 ## Commands
 
-The page does all of this too. After installing (`npm i -g gettend`), `tend` works as a shorter name.
+The page does all of this too. After installing (`npm i -g gettend-cli`), `tend` works as a shorter name.
 
 ```bash
-npx gettend status                 # every project's tokens, energy, CO2e and water
-npx gettend link ~/my-site --multiplier 3
-npx gettend settle ~/my-site       # what to buy
-npx gettend settle record ~/my-site --co2 177 --carbon biochar --carbon-cert https://… \
+npx gettend-cli status                 # every project's tokens, energy, CO2e and water
+npx gettend-cli link ~/my-site --multiplier 3
+npx gettend-cli settle ~/my-site       # what to buy
+npx gettend-cli settle record ~/my-site --co2 177 --carbon biochar --carbon-cert https://… \
   --water-gal 1000 --basin "Colorado River basin" --water-cert https://… --usd 28.55
-npx gettend settle list ~/my-site
-npx gettend settle undo ~/my-site
-npx gettend hook install           # or: hook uninstall, hook status
-npx gettend --help
+npx gettend-cli settle list ~/my-site
+npx gettend-cli settle undo ~/my-site
+npx gettend-cli hook install           # or: hook uninstall, hook status
+npx gettend-cli --help
 ```
 
 - Sessions in a subfolder or a worktree count toward the git repo they belong to.
@@ -67,7 +67,7 @@ npx gettend --help
 ## Status line
 
 ```bash
-npx gettend statusline install
+npx gettend-cli statusline install
 ```
 
 Shows this project's footprint at the bottom of Claude Code: `☘ checkout · 5.6 kg this week · ✓ restored`. It reads the summary Tend's scans keep, so install the hook too. If you already have a status line, it keeps running and Tend's part shows after it. `statusline uninstall` puts things back.
@@ -80,7 +80,7 @@ For a README, use the `footprint.svg` Tend writes next to `footprint.json`:
 [![Tend footprint](public/footprint.svg)](https://gettend.eco)
 ```
 
-For a website, copy `badge/tend-badge.js` from this package into your site (or load it from `https://unpkg.com/gettend@1/badge/tend-badge.js`, which picks up fixes and design updates within version 1 automatically), then pick a style with `variant`:
+For a website, copy `badge/tend-badge.js` from this package into your site (or load it from `https://unpkg.com/gettend-cli@1/badge/tend-badge.js`, which picks up fixes and design updates within version 1 automatically), then pick a style with `variant`:
 
 ```html
 <script type="module" src="/tend-badge.js"></script>
@@ -109,6 +109,6 @@ Tend doesn't make anyone carbon neutral. It helps you see your share and take re
 ## Uninstall
 
 ```bash
-npx gettend hook uninstall
+npx gettend-cli hook uninstall
 rm -rf ~/.tend
 ```

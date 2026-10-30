@@ -91,11 +91,11 @@ async function service() {
   const action = flags._[0] ?? 'status';
   if (!serviceSupported()) { console.error('Keeping Tend available in the background works on macOS only for now.'); process.exit(1); }
   if (action === 'status') return console.log(serviceOn() ? `On. Tend is always available at http://127.0.0.1:${SERVICE_PORT}` : 'Off.');
-  if (action !== 'on' && action !== 'off') { console.error('Use: gettend service on | off | status'); process.exit(1); }
+  if (action !== 'on' && action !== 'off') { console.error('Use: npx gettend-cli service on | off | status'); process.exit(1); }
   setService(action === 'on');
   console.log(action === 'on'
     ? `On. Bookmark http://127.0.0.1:${SERVICE_PORT}. Tend now starts quietly when you log in.`
-    : 'Off. Run npx gettend whenever you want the page.');
+    : 'Off. Run npx gettend-cli whenever you want the page.');
 }
 
 async function hook() {
@@ -110,7 +110,7 @@ async function hook() {
     console.log(`Tend will add these entries under "hooks" in ${p.settings}:\n`);
     console.log(JSON.stringify(p.entries, null, 2).replace(/^/gm, '  '));
     console.log(`\nYour other settings and hooks stay as they are. Before writing, Tend saves a backup to\n${p.backup}\nand copies itself to ${p.appDir} so the hook keeps working if npm clears its cache.\nThe hook runs "tend scan", which reads token counts from your Claude Code logs and sends nothing anywhere.\n`);
-    if (!process.stdin.isTTY) { console.error('Run "gettend hook install --yes" to add it without this question.'); process.exit(1); }
+    if (!process.stdin.isTTY) { console.error('Run "npx gettend-cli hook install --yes" to add it without this question.'); process.exit(1); }
     const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
     const answer = (await rl.question('Add this hook? [y/N] ')).trim().toLowerCase();
     rl.close();
@@ -142,7 +142,7 @@ async function statusline() {
       ? `\nYour current status line (${p.keeps.command}) keeps running, and Tend's part shows after it. Uninstalling puts it back.`
       : '\nUninstalling removes it again.');
     console.log(`It shows this project's carbon this week, from the summary Tend's scans keep. It reads nothing else and sends nothing anywhere.\nA backup of your settings goes to ${p.settings}.tend-backup first.\n`);
-    if (!process.stdin.isTTY) { console.error('Run "gettend statusline install --yes" to add it without this question.'); process.exit(1); }
+    if (!process.stdin.isTTY) { console.error('Run "npx gettend-cli statusline install --yes" to add it without this question.'); process.exit(1); }
     const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
     const answer = (await rl.question('Add it? [y/N] ')).trim().toLowerCase();
     rl.close();
@@ -150,7 +150,7 @@ async function statusline() {
   }
   setStatusLine(action === 'install');
   console.log(action === 'install'
-    ? 'Installed. Claude Code shows this project\'s footprint at the bottom from the next message.\nIt updates when Tend scans, so install the hook too: gettend hook install'
+    ? 'Installed. Claude Code shows this project\'s footprint at the bottom from the next message.\nIt updates when Tend scans, so install the hook too: npx gettend-cli hook install'
     : 'Removed Tend from the status line.');
 }
 
@@ -193,8 +193,8 @@ To restore ${q.multiplier === 1 ? 'your footprint' : `${q.multiplier}× your foo
   Water         ${buy.waterGal.toLocaleString('en-US')} gallon${buy.waterGal === 1 ? '' : 's'} → ${buy.certificates} Water Restoration Certificate${buy.certificates > 1 ? 's' : ''} (1,000 gallons each)
   About         $${buy.usd.toFixed(2)} at about $${(FACTORS.usdPerTonneRemoval / 1000).toFixed(2)}/kg removal and $${FACTORS.usdPerCertificate} per certificate
 
-After you buy, record exactly what you bought (or open the Tend page with "gettend"):
-  gettend settle record --co2 ${buy.co2Kg} --carbon biochar --carbon-cert <url> \\
+After you buy, record exactly what you bought (or open the Tend page with "npx gettend-cli"):
+  npx gettend-cli settle record --co2 ${buy.co2Kg} --carbon biochar --carbon-cert <url> \\
     --water-gal ${buy.certificates * 1000} --basin "Colorado River basin" --water-cert <url> --usd <total>`);
     return;
   }
@@ -230,36 +230,36 @@ async function version() {
 }
 
 function help() {
-  console.log(`gettend: the footprint of your Claude Code tokens, per project
-(also available as "tend" once installed)
+  console.log(`gettend-cli: the footprint of your Claude Code tokens, per project
+(run with npx gettend-cli; after "npm i -g gettend-cli", "gettend" and "tend" work too)
 
-  gettend                  Open the Tend page in your browser (--port <n>, --no-open)
-  gettend status           Show every project's tokens, energy, CO2e and water
-  gettend scan             Rescan and update every linked project's footprint file
-  gettend link [dir]       Keep a footprint file updated for a project
-      --out <file>         Where to write it (default: public/footprint.json)
-      --name <name>        Name shown on the badge
-      --multiplier <n>     "Leave it better" multiplier shown on the badge
-  gettend unlink [dir]     Stop updating a project's footprint file
-  gettend export [dir]     Print or write one footprint file once (--out <file>)
-  gettend settle [dir]     Show what to buy to restore the unsettled footprint
-  gettend settle record [dir] Record a purchase you made, so the badge shows it
-      --co2 <kg>           CO2 removal bought          --carbon <method>, --carbon-cert <url>
-      --water-gal <gal>    Water restoration bought    --basin <name>, --water-cert <url>
-      --usd <amount>       What you paid in total      --receipt <url> (optional)
-  gettend settle list [dir]   Show recorded settlements
-  gettend settle undo [dir]   Remove the last recorded settlement
-  gettend service on       Keep the page running in the background (macOS) so you can bookmark it
-  gettend service off      Stop it
-  gettend hook install     Rescan after each Claude Code turn (shows the change to
-                           ~/.claude/settings.json and asks first; --yes skips the question)
-  gettend hook uninstall   Remove that hook
-  gettend hook status      Show whether the hook is installed
-  gettend statusline install   Show this project's footprint in Claude Code's status line
-                           (keeps any status line you already have; asks first)
-  gettend statusline uninstall Remove it
+  npx gettend-cli                           Open the Tend page in your browser (--port <n>, --no-open)
+  npx gettend-cli status                    Show every project's tokens, energy, CO2e and water
+  npx gettend-cli scan                      Rescan and update every linked project's footprint file
+  npx gettend-cli link [dir]                Keep a footprint file updated for a project
+      --out <file>                          Where to write it (default: public/footprint.json)
+      --name <name>                         Name shown on the badge
+      --multiplier <n>                      "Leave it better" multiplier shown on the badge
+  npx gettend-cli unlink [dir]              Stop updating a project's footprint file
+  npx gettend-cli export [dir]              Print or write one footprint file once (--out <file>)
+  npx gettend-cli settle [dir]              Show what to buy to restore the unsettled footprint
+  npx gettend-cli settle record [dir]       Record a purchase you made, so the badge shows it
+      --co2 <kg>                            CO2 removal bought          --carbon <method>, --carbon-cert <url>
+      --water-gal <gal>                     Water restoration bought    --basin <name>, --water-cert <url>
+      --usd <amount>                        What you paid in total      --receipt <url> (optional)
+  npx gettend-cli settle list [dir]         Show recorded settlements
+  npx gettend-cli settle undo [dir]         Remove the last recorded settlement
+  npx gettend-cli service on                Keep the page running in the background (macOS) so you can bookmark it
+  npx gettend-cli service off               Stop it
+  npx gettend-cli hook install              Rescan after each Claude Code turn (shows the change to
+                                            ~/.claude/settings.json and asks first; --yes skips the question)
+  npx gettend-cli hook uninstall            Remove that hook
+  npx gettend-cli hook status               Show whether the hook is installed
+  npx gettend-cli statusline install        Show this project's footprint in Claude Code's status line
+                                            (keeps any status line you already have; asks first)
+  npx gettend-cli statusline uninstall      Remove it
 
-  --since <date>           Only count usage on or after this date, e.g. 2026-10-01`);
+  --since <date>                            Only count usage on or after this date, e.g. 2026-10-01`);
 }
 
 // ---------- output ----------

@@ -296,7 +296,7 @@ const L = (n) => `${Math.round(n).toLocaleString('en-US')} L`;
 const usd = (n) => `$${n.toFixed(2)}`;
 const date = (iso) => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 // Shown in the copy-paste snippet for the user's own site; this page never loads it.
-const BADGE_SCRIPT = 'https://unpkg.com/gettend@1/badge/tend-badge.js';
+const BADGE_SCRIPT = 'https://unpkg.com/gettend-cli@1/badge/tend-badge.js';
 // Where the opt-in "Add to the shared total" button sends a purchase's amounts and proof links.
 const SHARED_TOTAL_URL = 'https://gettend.eco/api/total';
 const WAITLIST_URL = 'https://script.google.com/macros/s/AKfycbx4coq78hs8QiSyUalpdvuObPZfAn6Cm-n4fZvZk0QKIbf1r2zQpLl3EUjhMxVtSeQq/exec'; // the Google Sheet's Apps Script web app; see waitlist/apps-script.gs in the site repo
@@ -789,7 +789,7 @@ document.addEventListener('click', async (e) => {
   const b = e.target;
   if (!b.dataset.armed) { b.dataset.armed = '1'; b.textContent = 'Click again to turn off'; setTimeout(() => { delete b.dataset.armed; b.textContent = 'Turn off'; }, 4000); return; }
   await api('service', { on: false }).catch(() => {});
-  toast('Tend no longer runs in the background. Run npx gettend to open it again.');
+  toast('Tend no longer runs in the background. Run npx gettend-cli to open it again.');
   load().catch(() => {});
 });
 
