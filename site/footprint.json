@@ -1,0 +1,55 @@
+{
+  "schema": "tend/1",
+  "project": "tend",
+  "updated": "2026-10-27T18:23:21.003Z",
+  "firstActive": "2026-10-23T23:44:57.452Z",
+  "lastActive": "2026-10-27T18:23:15.917Z",
+  "sessions": 1,
+  "tokens": {
+    "input": 1346,
+    "cacheWrite": 2096996,
+    "cacheRead": 284023793,
+    "output": 381878,
+    "total": 286504013
+  },
+  "footprint": {
+    "kwh": {
+      "low": 7.201,
+      "mid": 18.003,
+      "high": 45.008
+    },
+    "co2Kg": {
+      "low": 2.52,
+      "mid": 6.301,
+      "high": 15.753
+    },
+    "waterL": {
+      "low": 25.205,
+      "mid": 63.011,
+      "high": 157.529
+    },
+    "restoreUsd": 1.3268
+  },
+  "multiplier": 1,
+  "restoreUsdAtMultiplier": 1.33,
+  "weekly": [
+    {
+      "week": "2026-W43",
+      "tokens": 238201085,
+      "co2Kg": 5.169
+    },
+    {
+      "week": "2026-W44",
+      "tokens": 48302928,
+      "co2Kg": 1.132
+    }
+  ],
+  "models": {
+    "claude-opus-5-5": 286504013
+  },
+  "method": {
+    "version": "2026-10",
+    "estimate": "mid",
+    "note": "Estimates from public data; low/high band included."
+  }
+}

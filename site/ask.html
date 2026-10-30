@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ask AI providers to publish their footprint · Tend</title>
+<meta name="description" content="Nobody outside AI companies knows the energy, carbon, or water of a single request. Add your name to ask providers to publish it.">
+<link rel="canonical" href="https://gettend.eco/ask">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Tend">
+<meta property="og:title" content="Ask AI providers to publish their footprint">
+<meta property="og:description" content="Nobody outside AI companies knows the energy, carbon, or water of a single request. Add your name to ask providers to publish it.">
+<meta property="og:url" content="https://gettend.eco/ask">
+<meta property="og:image" content="https://gettend.eco/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Every prompt leaves a mark. Tend to it.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Ask AI providers to publish their footprint">
+<meta name="twitter:description" content="Nobody outside AI companies knows the energy, carbon, or water of a single request. Add your name to ask providers to publish it.">
+<meta name="twitter:image" content="https://gettend.eco/og.png">
+<!-- Cookieless page counts. Turn on Web Analytics for this project in Vercel; until then this request just 404s. -->
+<script defer src="/_vercel/insights/script.js"></script>
+<script>
+// Uses the theme chosen in the homepage footer, if any.
+try{const t=localStorage.getItem('tend.theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch{}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a methods appendix. One readable column, the table set wide, notes in the margin of the text. */
+:root{
+  --bg:#E9EEEA; --surface:#F6F8F5; --paper:#FCFCF8; --ink:#13201A; --muted:#55645C; --line:#C9D3CC; --moss:#2E6A4C;
+  --display:"Bricolage Grotesque","Avenir Next",system-ui,sans-serif;
+  --body:"Instrument Sans","Helvetica Neue",system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0E1512;--surface:#151E1A;--paper:#1C2621;--ink:#E4ECE6;--muted:#97A79E;--line:#2C3A33;--moss:#7CC39C;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0E1512;--surface:#151E1A;--paper:#1C2621;--ink:#E4ECE6;--muted:#97A79E;--line:#2C3A33;--moss:#7CC39C;color-scheme:dark}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.65 var(--body);-webkit-font-smoothing:antialiased}
+.wrap{max-width:820px;margin:0 auto;padding:40px max(16px,env(safe-area-inset-right,0px)) 120px max(16px,env(safe-area-inset-left,0px))}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--moss);outline-offset:3px;border-radius:6px}
+.back{font-size:14px;color:var(--muted);text-decoration:none}
+.back:hover{color:var(--ink)}
+h1,h2{font-family:var(--display);letter-spacing:-.025em;line-height:1.05;text-wrap:balance;margin:0}
+h1{font-size:clamp(40px,6vw,64px);font-weight:800;margin-top:40px}
+h2{font-size:28px;font-weight:800;margin-top:72px}
+p{margin:16px 0 0;max-width:64ch}
+.lead{font-size:20px}
+.muted{color:var(--muted)}
+.mono{font-family:var(--mono)}
+.formula{margin-top:20px;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:18px 20px;font:14px/1.9 var(--mono);overflow-x:auto;white-space:pre}
+.tbl{margin-top:24px;overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--paper)}
+table{width:100%;border-collapse:collapse;font-size:15px;min-width:600px}
+th,td{text-align:left;padding:12px 16px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-weight:600;color:var(--muted);background:var(--surface);font-size:13px}
+td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+tr:last-child td{border-bottom:0}
+ul{margin:16px 0 0;padding-left:20px;display:grid;gap:6px;max-width:64ch}
+.aside{margin-top:24px;border-left:3px solid var(--moss);padding-left:16px}
+.log{list-style:none;margin:24px 0 0;padding:0;border-top:1px solid var(--line);max-width:64ch}
+.log li{display:grid;grid-template-columns:90px 1fr;gap:2px 16px;padding:14px 0;border-bottom:1px solid var(--line)}
+.log b{color:var(--moss);font-weight:600}
+.log small{grid-column:2;color:var(--muted);font-size:13px}
+.version{margin-top:72px;padding-top:20px;border-top:1px solid var(--line);font:13px var(--mono);color:var(--muted)}
+
+.letter{margin-top:32px;background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:clamp(22px,4vw,36px);font-size:18px;line-height:1.6}
+.letter p{max-width:none}
+.letter ul{margin-top:14px}
+.letter .to{font:13px var(--mono);color:var(--muted);margin:0 0 14px}
+form{display:grid;gap:18px;margin-top:28px;max-width:560px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:560px){.two{grid-template-columns:1fr}}
+.field{display:grid;gap:6px;font-size:14px;font-weight:600}
+.field small{font-weight:400;color:var(--muted)}
+.field input{font:16px var(--body);color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:12px 14px;width:100%}
+.field input:focus{outline:2px solid var(--moss);outline-offset:1px;border-color:transparent}
+[aria-invalid="true"]{border-color:#B5462F!important}
+.check{display:flex;gap:10px;align-items:flex-start;font-size:15px}
+.check input{width:18px;height:18px;margin-top:3px;accent-color:var(--moss)}
+.err{font-size:13px;font-weight:400;color:#B5462F}
+.err:empty{display:none}
+.btn{display:inline-flex;align-items:center;justify-content:center;background:var(--ink);color:var(--bg);font:600 16px var(--body);padding:13px 20px;border-radius:12px;border:0;cursor:pointer;justify-self:start}
+.btn:hover{filter:brightness(1.15)}
+.thanks{margin-top:28px;background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:24px}
+.thanks h3{font:800 26px/1.1 var(--display);margin:0}
+.thanks p{margin-top:8px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap" id="top">
+  <a class="back" href="/">← Tend</a>
+  <h1>Ask AI providers to publish their footprint</h1>
+  <p class="lead">Nobody outside AI companies knows the energy, carbon, or water of a single request. Tend estimates it with a range because that data isn't published. Add your name to ask for it.</p>
+
+  <div class="letter">
+    <p class="to">To Anthropic, OpenAI, Google, Microsoft, Meta, and every company serving AI models</p>
+    <p>We use your models every day, and we want to understand what that use costs the planet. Please publish, for each model:</p>
+    <ul>
+      <li>Energy, carbon, and water per request, or per million tokens</li>
+      <li>Where requests are served, and the electricity mix there, hour by hour</li>
+      <li>Water used for cooling, and water used to generate that electricity</li>
+      <li>A regular schedule for these numbers, with methods others can check</li>
+    </ul>
+    <p>With real numbers, people can choose models and providers with their footprint in mind, and projects like Tend can replace estimates with measurements.</p>
+  </div>
+
+  <h2>Add your name</h2>
+  <p>When the list is large enough, Tend will send it to each provider and publish their replies here.</p>
+  <form id="askForm" novalidate>
+    <div class="two">
+      <label class="field"><span>Name</span><input name="name" id="aName" autocomplete="name" aria-describedby="eName" required><span class="err" id="eName" aria-live="polite"></span></label>
+      <label class="field"><span>Email</span><input type="email" name="email" id="aEmail" autocomplete="email" aria-describedby="eEmail" required><span class="err" id="eEmail" aria-live="polite"></span></label>
+    </div>
+    <div class="two">
+      <label class="field"><span>Role <small>(optional)</small></span><input name="role" autocomplete="organization-title" placeholder="Engineer, founder, student…"></label>
+      <label class="field"><span>Company or school <small>(optional)</small></span><input name="company" autocomplete="organization"></label>
+    </div>
+    <label class="check"><input type="checkbox" name="public" value="yes"> <span>Show my name and company on the public list of signers.</span></label>
+    <button class="btn" type="submit">Add my name</button>
+    <p class="err" id="eForm" aria-live="polite"></p>
+  </form>
+  <div class="thanks" id="thanks" role="status" tabindex="-1" hidden>
+    <h3>Thank you for adding your name.</h3>
+    <p>We'll email you when the letter goes out, and again when providers reply.</p>
+  </div>
+
+  <p class="version"><a href="/privacy">How your details are used</a> · <a href="/methodology">How Tend estimates today</a></p>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+// Signatures go to a private Google Sheet through its Apps Script web app (waitlist/apps-script.gs).
+// Nothing is sent while SIGNUP_URL is empty: the page only shows its thank-you.
+const SIGNUP_URL='https://script.google.com/macros/s/AKfycbx4coq78hs8QiSyUalpdvuObPZfAn6Cm-n4fZvZk0QKIbf1r2zQpLl3EUjhMxVtSeQq/exec';
+async function sign(d){
+  if(!SIGNUP_URL)return;
+  const body=new URLSearchParams({form:'ask',email:d.email,name:d.name,role:d.role,company:d.company,public_listing:d.public?'yes':'no'});
+  await fetch(SIGNUP_URL,{method:'POST',mode:'no-cors',body});
+}
+const form=$('askForm');
+const check=()=>{
+  const name=form.name.value.trim(), email=form.email.value.trim();
+  const eName=name?'':'Add your name.', eEmail=!email?'Enter your email.':/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)?'':'Enter an email like name@example.com.';
+  $('eName').textContent=eName;$('eEmail').textContent=eEmail;
+  form.name.setAttribute('aria-invalid',!!eName);form.email.setAttribute('aria-invalid',!!eEmail);
+  return eName?form.name:eEmail?form.email:null;
+};
+form.addEventListener('input',()=>{if(form.querySelector('[aria-invalid="true"]'))check()});
+form.addEventListener('submit',async e=>{
+  e.preventDefault();
+  const bad=check(); if(bad)return bad.focus();
+  try{
+    await sign({name:form.name.value.trim(),email:form.email.value.trim(),role:form.role.value.trim(),company:form.company.value.trim(),public:form.public.checked});
+    form.hidden=true;$('thanks').hidden=false;$('thanks').focus();
+  }catch{$('eForm').textContent="That didn't go through. Try again in a moment."}
+});
+// Always open at the top, even when the browser or the preview would keep an earlier scroll position.
+if('scrollRestoration' in history)history.scrollRestoration='manual';
+window.scrollTo(0,0);
+addEventListener('pageshow',()=>window.scrollTo(0,0));
+</script>
+</body>
+</html>

@@ -1,0 +1,865 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tend: the footprint of your Claude Code usage</title>
+<meta name="description" content="Tend estimates the energy, carbon, and water behind your Claude Code usage, then helps you fund carbon removal and water restoration in proportion to it.">
+<link rel="canonical" href="https://gettend.eco/">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Tend">
+<meta property="og:title" content="Tend: every prompt leaves a mark">
+<meta property="og:description" content="Tend estimates the energy, carbon, and water behind your Claude Code usage, then helps you fund carbon removal and water restoration in proportion to it.">
+<meta property="og:url" content="https://gettend.eco/">
+<meta property="og:image" content="https://gettend.eco/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Every prompt leaves a mark. Tend to it.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Tend: every prompt leaves a mark">
+<meta name="twitter:description" content="Tend estimates the energy, carbon, and water behind your Claude Code usage, then helps you fund carbon removal and water restoration in proportion to it.">
+<meta name="twitter:image" content="https://gettend.eco/og.png">
+<!-- Cookieless page counts. Turn on Web Analytics for this project in Vercel; until then this request just 404s. -->
+<script defer src="/_vercel/insights/script.js"></script>
+<script>
+// The saved theme choice (System, Light, Dark) is applied before the page draws, so there's no flash.
+try{const t=localStorage.getItem('tend.theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch{}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a field notebook. One statement, one working object, one short explanation, then whitespace. */
+:root{
+  --bg:#E9EEEA; --surface:#F6F8F5; --paper:#FCFCF8; --ink:#13201A; --muted:#55645C; --line:#C9D3CC;
+  --moss:#2E6A4C; --water:#2A6A8C; --stamp:#B5462F; --moss-soft:#D3E4D9; --water-soft:#D2E3EC;
+  --display:"Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
+  --body:"Instrument Sans", "Helvetica Neue", system-ui, sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  --shadow:0 1px 0 rgba(19,32,26,.05), 0 18px 40px -22px rgba(19,32,26,.35);
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0E1512; --surface:#151E1A; --paper:#1C2621; --ink:#E4ECE6; --muted:#97A79E; --line:#2C3A33;
+  --moss:#7CC39C; --water:#7BB8D8; --stamp:#E58A70; --moss-soft:#1F3328; --water-soft:#1C2E38;
+  --shadow:0 1px 0 rgba(0,0,0,.3), 0 18px 40px -22px rgba(0,0,0,.8); color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0E1512; --surface:#151E1A; --paper:#1C2621; --ink:#E4ECE6; --muted:#97A79E; --line:#2C3A33;
+  --moss:#7CC39C; --water:#7BB8D8; --stamp:#E58A70; --moss-soft:#1F3328; --water-soft:#1C2E38;
+  --shadow:0 1px 0 rgba(0,0,0,.3), 0 18px 40px -22px rgba(0,0,0,.8); color-scheme:dark}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;position:relative;z-index:0;background:var(--bg);color:var(--ink);font:17px/1.6 var(--body);-webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--display);line-height:1.04;text-wrap:balance;margin:0;letter-spacing:-.025em}
+h2{font-size:clamp(30px,3.8vw,46px);font-weight:800}
+h3{font-size:24px;font-weight:600;letter-spacing:-.015em}
+p{margin:0}
+a{color:inherit}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--water);outline-offset:3px;border-radius:6px}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.chapter{padding-block:clamp(80px,10vw,120px)}
+/* Every other section sits on a full-width band; the page wrapper stays centered. */
+.band{position:relative}
+.band::before{content:"";position:absolute;inset:0 calc(50% - 50vw);background:var(--surface);border-block:1px solid color-mix(in srgb,var(--line) 55%,transparent);z-index:-1}
+html{overflow-x:clip}
+.say{max-width:52ch;color:var(--muted);font-size:19px;margin-top:20px}
+
+/* top bar */
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-block:22px}
+.logo{display:flex;align-items:center;gap:10px;font:800 20px var(--display);letter-spacing:-.02em;text-decoration:none}
+.logo b{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--ink);color:var(--bg);font:600 13px var(--mono)}
+.top ul{display:flex;gap:26px;list-style:none;margin:0;padding:0;font-size:14px;color:var(--muted)}
+.top ul a{text-decoration:none}
+.top ul a:hover{color:var(--ink)}
+@media (max-width:720px){.top ul{display:none}}
+
+/* hero */
+.hero{display:grid;grid-template-columns:1.15fr .85fr;gap:64px;align-items:start;padding-block:48px clamp(80px,10vw,120px)}
+.hero > *{min-width:0}
+.hero h1{font-size:clamp(48px,7.4vw,96px);font-weight:800}
+.hero h1 em{font-style:normal;color:var(--moss);position:relative;white-space:nowrap}
+.hero .say{font-size:21px;color:var(--ink);margin-top:28px;max-width:30ch}
+.cta{display:flex;flex-wrap:wrap;gap:12px;margin-top:36px;align-items:center}
+.cmd{display:flex;align-items:center;gap:12px;background:var(--ink);color:var(--bg);border-radius:12px;padding:13px 12px 13px 18px;font:500 16px var(--mono);border:0;cursor:pointer;max-width:100%}
+.cmd span{opacity:.55}
+.cmd i{font-style:normal;font-size:12px;background:color-mix(in srgb,var(--bg) 16%,transparent);padding:5px 9px;border-radius:7px}
+.ghost{background:none;border:1px solid var(--line);padding:13px 18px;border-radius:12px;text-decoration:none;font-weight:500}
+.ghost:hover{border-color:var(--ink)}
+@media (max-width:900px){.hero{grid-template-columns:1fr;gap:48px}}
+
+/* receipt */
+.receipt{background:var(--paper);box-shadow:var(--shadow);font:13px/1.55 var(--mono);font-variant-numeric:tabular-nums;padding:26px 24px 34px;position:relative;
+  -webkit-mask:radial-gradient(circle 7px at 50% 100%,#0000 98%,#000) 0 0/16px 100% repeat-x;
+          mask:radial-gradient(circle 7px at 50% 100%,#0000 98%,#000) 0 0/16px 100% repeat-x}
+.receipt .head{text-align:center;display:grid;gap:2px;padding-bottom:14px;border-bottom:1px dashed var(--line)}
+.receipt .head b{font:800 22px var(--display);letter-spacing:-.02em}
+.receipt .head small{color:var(--muted)}
+.lines{list-style:none;margin:0;padding:12px 0;display:grid;gap:9px;border-bottom:1px dashed var(--line)}
+.lines li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 12px}
+.lines .what{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lines .amt{transition:color .6s}
+.lines .amt.tick{color:var(--moss);transition:none}
+.lines .sub{color:var(--muted);font-size:11.5px;grid-column:1/-1}
+.tot{display:grid;gap:4px;padding-top:12px}
+.tot div{display:flex;justify-content:space-between;gap:12px}
+.tot .big{font-weight:600;font-size:15px;padding-top:6px;border-top:1px solid var(--line);margin-top:4px;align-items:baseline}
+.tot .big small{font-weight:400;font-size:12px;color:var(--muted)}
+.tot span[id]{transition:color .6s}
+.tot span.tick{color:var(--moss);transition:none}
+.barcode{height:34px;margin-top:16px;background:repeating-linear-gradient(90deg,var(--ink) 0 2px,transparent 2px 4px,var(--ink) 4px 5px,transparent 5px 8px,var(--ink) 8px 11px,transparent 11px 12px);opacity:.85}
+.live{display:inline-flex;align-items:center;justify-content:center;gap:6px;color:var(--moss);font-weight:600}
+.live::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.3}}
+
+/* how it works: three columns, each led by a small line icon */
+.route{list-style:none;margin:56px 0 0;padding:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(28px,4vw,64px)}
+.route li{display:grid;gap:10px;align-content:start;min-width:0}
+.ico-box{display:grid;place-items:center;width:40px;height:40px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--moss)}
+.ico-box svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.route b{font:800 30px/1 var(--display);letter-spacing:-.02em;margin-top:8px}
+.route p{color:var(--muted);max-width:36ch}
+.route code{font:14px var(--mono);color:var(--ink);background:var(--paper);border:1px solid var(--line);padding:1px 6px;border-radius:6px}
+.route small{font-size:13px;line-height:1.5;color:var(--muted);max-width:36ch;opacity:.85}
+@media (max-width:760px){.route{grid-template-columns:1fr;gap:36px}}
+
+/* calculator: inputs in a panel, a four-tile estimate beside it */
+.calc{display:grid;grid-template-columns:.9fr 1.1fr;gap:40px;align-items:start}
+.calc > *{min-width:0}
+@media (max-width:880px){.calc{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:22px;display:grid;gap:18px}
+.row{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.label{font-size:14px;font-weight:600}
+.hint{font-size:13px;color:var(--muted)}
+.field{display:grid;gap:8px}
+.field .row strong{font:600 15px var(--mono)}
+input[type=range]{width:100%;accent-color:var(--moss)}
+.calc-out{display:grid;gap:14px}
+.calc-out .hint a{color:var(--ink)}
+.calc-out h3{font-size:18px}
+.out{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+.out > div{background:var(--paper);padding:18px;display:grid;gap:4px}
+.out .v{font:600 clamp(22px,3vw,30px) var(--mono);font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.out .v small{font-size:13px;color:var(--muted);font-weight:400}
+.out .k{font-size:13px;color:var(--muted)}
+.out .range{font:11.5px var(--mono);color:var(--muted)}
+
+/* what you can fund: two editorial blocks */
+.funds{margin-top:64px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(32px,6vw,96px)}
+.funds > *{min-width:0}
+@media (max-width:820px){.funds{grid-template-columns:1fr;gap:64px}}
+.fund-block{display:grid;gap:18px;align-content:start;padding-top:22px;border-top:3px solid var(--moss)}
+.fund-block.w{border-top-color:var(--water)}
+.fund-block h3{font-size:clamp(30px,3.6vw,40px);font-weight:800}
+.fund-block p{color:var(--muted);max-width:44ch}
+.fund-block .kinds{font:14px var(--mono);color:var(--ink)}
+.providers{list-style:none;margin:6px 0 0;padding:0;display:grid}
+.providers li{border-top:1px solid var(--line)}
+.providers li:last-child{border-bottom:1px solid var(--line)}
+.providers a{display:grid;grid-template-columns:1fr auto;gap:2px 16px;padding:14px 2px;text-decoration:none}
+.providers a:hover strong{text-decoration:underline}
+.providers strong{font-weight:600}
+.providers span{grid-column:1;font-size:14px;color:var(--muted)}
+.providers em{grid-row:1/3;grid-column:2;align-self:center;font-style:normal;color:var(--muted)}
+.how-fund{margin-top:56px;max-width:62ch;color:var(--muted);font-size:17px;border-left:3px solid var(--line);padding-left:18px}
+
+
+/* records: the three badge styles laid out like specimens on a table */
+.records{margin-top:64px;display:flex;flex-wrap:wrap;gap:48px clamp(32px,5vw,72px);align-items:flex-end;justify-content:space-between}
+.records figure{margin:0;display:grid;gap:16px;justify-items:start}
+[data-tip]{position:relative}
+.records [data-tip]{cursor:default}
+[data-tip]::after{content:attr(data-tip);position:absolute;left:50%;bottom:calc(100% + 10px);transform:translate(-50%,4px);background:var(--ink);color:var(--bg);font:500 12.5px/1.3 var(--body);padding:7px 10px;border-radius:8px;white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .15s,transform .15s;z-index:3;box-shadow:var(--shadow)}
+[data-tip]:hover::after,[data-tip]:focus-visible::after{opacity:1;transform:translate(-50%,0)}
+.records figcaption{font:13px var(--mono);color:var(--muted)}
+.pill{display:inline-flex;align-items:center;gap:10px;white-space:nowrap;background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:7px 14px 7px 7px;font:12.5px var(--mono);font-variant-numeric:tabular-nums;box-shadow:var(--shadow)}
+.pill b{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--ink);color:var(--paper);font-size:11px}
+.pill .ok{color:var(--moss);font-weight:600}
+.label-card{background:var(--paper);border:2px solid var(--ink);padding:10px 12px;width:250px;max-width:100%;font:12.5px/1.4 var(--body);box-shadow:var(--shadow)}
+.label-card h4{font:800 24px/1 var(--display);margin:0 0 4px;letter-spacing:-.02em;border-bottom:6px solid var(--ink);padding-bottom:4px}
+.label-card div{display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid var(--ink);padding:3px 0;font-variant-numeric:tabular-nums}
+.label-card div:last-child{border-bottom:0;font-weight:600}
+.stub{background:var(--paper);box-shadow:var(--shadow);font:12px/1.55 var(--mono);padding:14px 16px;width:280px;max-width:100%;border-left:3px dashed var(--line);font-variant-numeric:tabular-nums;display:grid}
+.stub strong{font:800 16px var(--display);margin-bottom:4px}
+.stub span{color:var(--muted)}
+.stub em{font-style:normal;color:var(--ink)}
+.label-card .ok,.stub .ok{color:var(--moss)}
+@media (max-width:720px){.records{justify-content:flex-start}}
+
+
+.say.sub{margin-top:12px;font-size:17px}
+.plan-cta button.btn-cta{border:0;cursor:pointer;font:600 16px var(--body)}
+.contact{border:1px solid var(--line);border-radius:20px;padding:0;width:min(640px,calc(100vw - 32px));max-height:calc(100dvh - 48px);overflow:auto;overscroll-behavior:contain;background:var(--paper);color:var(--ink);box-shadow:0 30px 80px -30px rgba(0,0,0,.45)}
+.contact::backdrop{background:rgba(19,32,26,.45);backdrop-filter:blur(2px)}
+.contact form{display:grid;gap:24px;padding:4px clamp(20px,4vw,32px) clamp(24px,4vw,32px)}
+.contact-head{position:sticky;top:0;z-index:1;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:clamp(20px,4vw,28px) clamp(20px,4vw,32px) 16px;background:var(--paper);border-bottom:1px solid color-mix(in srgb,var(--line) 60%,transparent)}
+.contact-head > div{display:grid;gap:8px}
+.contact-head h3{font-size:26px;font-weight:800}
+.contact-x{border:0;background:none;font-size:26px;line-height:1;color:var(--muted);cursor:pointer;padding:4px 8px;border-radius:8px}
+.contact-x:hover{color:var(--ink)}
+.contact-sub{color:var(--muted);font-size:15px}
+@media (max-width:560px){.contact{width:100vw;max-width:100vw;max-height:100dvh;height:100dvh;border-radius:0;border:0}}
+.contact-two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:560px){.contact-two{grid-template-columns:1fr}}
+.wl-field{display:grid;gap:6px;font-size:14px;font-weight:600;align-content:start}
+.wl-field small{font-weight:400;color:var(--muted)}
+.wl-field input,.wl-field select,.wl-field textarea{font:15px var(--body);color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%;resize:vertical}
+.wl-field :focus{outline:2px solid var(--moss);outline-offset:1px;border-color:transparent}
+.wl-field [aria-invalid="true"]{border-color:var(--stamp)}
+.contact .btn-cta{border:0;cursor:pointer;font:600 16px var(--body);justify-content:center;margin-top:4px}
+.ph{font-style:normal;color:var(--stamp);background:color-mix(in srgb,var(--stamp) 9%,transparent);border:1px dashed color-mix(in srgb,var(--stamp) 45%,transparent);border-radius:6px;padding:0 5px;box-decoration-break:clone;-webkit-box-decoration-break:clone}
+.contact fieldset{border:0;margin:0;padding:0;min-width:0}
+.contact legend{font-size:14px;font-weight:600;padding:0;margin-bottom:10px}
+.contact legend small{font-weight:400;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{position:relative;display:inline-flex}
+.chip input{position:absolute;opacity:0;inset:0;margin:0;cursor:pointer}
+.chip span{display:inline-flex;align-items:center;gap:8px;padding:8px 13px;border:1px solid var(--line);border-radius:999px;background:var(--bg);font-size:14.5px;transition:background .15s,border-color .15s}
+.chip input[type=checkbox] + span::before{content:"";width:13px;height:13px;border:1.5px solid var(--muted);border-radius:4px}
+.chip input[type=radio] + span::before{content:"";width:13px;height:13px;border:1.5px solid var(--muted);border-radius:50%}
+.chip:hover span{border-color:var(--ink)}
+.chip input:checked + span{background:var(--moss-soft);border-color:var(--moss)}
+.chip input:checked + span::before{border-color:var(--moss);background:var(--moss);box-shadow:inset 0 0 0 2.5px var(--moss-soft)}
+.chip input:focus-visible + span{outline:2px solid var(--water);outline-offset:2px}
+fieldset[aria-invalid="true"] .chip span{border-color:color-mix(in srgb,var(--stamp) 60%,var(--line))}
+.err{font-size:13px;font-weight:400;color:var(--stamp)}
+.err:empty{display:none}
+.form-foot{display:flex;flex-wrap:wrap;align-items:center;gap:12px 18px}
+.thanks{display:grid;gap:14px;justify-items:start;padding:8px clamp(20px,4vw,32px) clamp(24px,4vw,32px)}
+.thanks .seal{display:grid;place-items:center;width:52px;height:52px;border-radius:50%;background:var(--moss-soft);color:var(--moss)}
+.thanks .seal svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.thanks h3{font-size:30px;font-weight:800}
+.thanks p{color:var(--muted);max-width:44ch}
+.thanks .btn-cta{border:0;cursor:pointer;font:600 16px var(--body)}
+.fund-note{font-size:14px;border-top:1px solid var(--line);padding-top:14px;margin-top:4px}
+.hero .say.sub{color:var(--muted);font-size:18px;max-width:38ch;margin-top:12px}
+.principles{margin:28px 0 0;display:grid;gap:14px}
+.principles dt{font-weight:600}
+.principles dd{margin:2px 0 0;color:var(--muted);font-size:15.5px;max-width:52ch}
+.aim{margin-top:28px;border-left:3px solid var(--moss);padding-left:14px;font-size:15.5px;max-width:52ch}
+/* section headers: heading left, one line right */
+.sec-head{display:grid;gap:12px;max-width:760px}
+.sec-head p{color:var(--muted);font-size:18px;max-width:52ch}
+.sec-head .community{display:inline-flex;align-items:center;gap:10px;width:max-content;max-width:100%;color:var(--ink);font-size:15px;background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:8px 16px}
+.community .dot{width:8px;height:8px;border-radius:50%;background:var(--moss);flex:none}
+.community b{font-family:var(--mono);font-weight:600}
+.sec-head + *{margin-top:44px!important}
+
+/* method: a row of four facts, details behind a toggle */
+.facts{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px}
+@media (max-width:820px){.facts{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.facts li{display:grid;gap:6px;align-content:start}
+.facts b{font:600 13px var(--mono);color:var(--moss);letter-spacing:.02em}
+.facts span{font-size:15.5px;color:var(--ink);max-width:24ch}
+.more{margin-top:36px;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.more summary{cursor:pointer;padding:16px 0;font-weight:600;list-style:none;display:flex;justify-content:space-between;align-items:center}
+.more summary::-webkit-details-marker{display:none}
+.more summary::after{content:"+";font:400 22px var(--mono);color:var(--muted)}
+.more[open] summary::after{content:"–"}
+.more .principles{margin:0 0 20px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px 48px}
+@media (max-width:760px){.more .principles{grid-template-columns:1fr}}
+.more .principles > div{display:grid;gap:4px}
+
+/* how the estimate works: a statement plus footnotes */
+.method{margin-top:48px;display:grid;grid-template-columns:1fr 1fr;gap:clamp(32px,6vw,96px)}
+.method > *{min-width:0}
+@media (max-width:820px){.method{grid-template-columns:1fr;gap:40px}}
+.method .say{margin-top:0;color:var(--ink);font-size:20px;max-width:none}
+.method .say + .say{margin-top:16px;color:var(--muted);font-size:17px}
+.notes{list-style:none;margin:0;padding:0;display:grid;gap:0;counter-reset:n;align-content:start}
+.notes li{counter-increment:n;display:grid;grid-template-columns:28px 1fr;gap:4px 12px;padding:14px 0;border-top:1px solid var(--line);font-size:15px}
+.notes li:last-child{border-bottom:1px solid var(--line)}
+.notes li::before{content:counter(n);font:600 12px/1.9 var(--mono);color:var(--moss)}
+.notes b{font-weight:600}
+.notes span{grid-column:2;color:var(--muted)}
+.ask-line{margin-top:36px;color:var(--muted);font-size:17px;max-width:62ch}
+.ask-line .readmore{margin-top:0;margin-left:6px;color:var(--ink)}
+.readmore-2{margin-top:20px}
+.readmore{display:inline-block;margin-top:28px;font-weight:600;text-decoration:none;border-bottom:2px solid var(--moss);padding-bottom:2px}
+
+/* pricing */
+.plans{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;margin-top:56px}
+@media (max-width:820px){.plans{grid-template-columns:1fr}}
+.plan{border:1px solid var(--line);border-radius:20px;padding:clamp(24px,3vw,36px);display:grid;gap:16px;align-content:start;background:var(--paper)}
+.plan.hi{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.plan-head{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.plan h3{font-size:26px;font-weight:800}
+.plan .tag{font:600 12px var(--mono);color:var(--moss);background:var(--moss-soft);border-radius:999px;padding:4px 10px;white-space:nowrap}
+.plan.hi .tag{background:color-mix(in srgb,var(--bg) 16%,transparent);color:var(--bg)}
+.plan-for{color:var(--muted);font-size:15.5px}
+.plan.hi .plan-for,.plan.hi li{color:color-mix(in srgb,var(--bg) 72%,transparent)}
+.plan .price{font:800 48px/1 var(--display);letter-spacing:-.03em}
+.plan .price small{font:500 16px var(--body);letter-spacing:0;color:var(--muted);margin-left:6px}
+.price-note{margin:-8px 0 0;font:13px var(--mono);color:var(--muted)}
+.plan ul{margin:0;padding-left:18px;display:grid;gap:7px;color:var(--muted);font-size:15.5px}
+.plan.hi .cmd{background:var(--bg);color:var(--ink);justify-self:start}
+.plan.hi .cmd i{background:color-mix(in srgb,var(--ink) 10%,transparent)}
+.plan-cta{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px}
+.btn-cta{display:inline-flex;align-items:center;background:var(--ink);color:var(--bg);text-decoration:none;font-weight:600;padding:12px 18px;border-radius:12px}
+.btn-cta:hover{filter:brightness(1.15)}
+.plan .hint{font-size:13px;color:var(--muted)}
+
+/* install */
+.install{padding-block:clamp(110px,15vw,180px) clamp(80px,10vw,120px);text-align:center;display:grid;justify-items:center;gap:22px}
+.install h2{font-size:clamp(44px,7vw,92px)}
+.install .cmd{font-size:18px;padding:16px 14px 16px 22px}
+.install p{color:var(--muted);max-width:46ch}
+
+/* footer */
+.site-foot{color:var(--muted);font-size:14px;overflow:hidden}
+.foot-row{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:16px 28px;padding-block:28px;border-top:1px solid var(--line)}
+.foot-row .foot-links{justify-self:end}
+@media (max-width:760px){.foot-row{grid-template-columns:1fr auto}.foot-row .foot-marks{grid-column:1/-1;grid-row:2}}
+.foot-row ul{display:flex;flex-wrap:wrap;gap:8px 22px;list-style:none;margin:0;padding:0}
+.foot-row a{text-decoration:none}
+.foot-row a:hover{color:var(--ink)}
+.foot-marks{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.foot-pill{box-shadow:none;font-size:12px;color:var(--ink);text-decoration:none}
+.foot-pill:hover{border-color:var(--ink)}
+.foot-pill[data-tip]::after{left:auto;right:0;bottom:auto;top:calc(100% + 10px);transform:translateY(-4px)}
+.foot-pill[data-tip]:hover::after,.foot-pill[data-tip]:focus-visible::after{transform:none}
+.theme-switch{display:inline-flex;gap:2px;padding:3px;border:1px solid var(--line);border-radius:999px;background:var(--paper)}
+.theme-switch button{display:grid;place-items:center;width:30px;height:30px;border:0;border-radius:50%;background:none;color:var(--muted);cursor:pointer;padding:0}
+.theme-switch button:hover{color:var(--ink)}
+.theme-switch button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.theme-switch svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.foot-legal{display:flex;justify-content:space-between;gap:8px 20px;flex-wrap:wrap;font-size:12.5px;padding-block:0 26px}
+.foot-scene{position:relative;height:clamp(320px,50vw,600px);background:url("assets/forest-river.jpg") center 58%/cover no-repeat}
+.foot-scene::before{content:"";position:absolute;inset:-1px 0 0;background:linear-gradient(var(--bg) 2%,transparent 36%),linear-gradient(transparent 50%,rgba(8,14,11,.4))}
+.foot-word{position:absolute;left:50%;bottom:0;transform:translate(-50%,24%);font:800 clamp(100px,31vw,440px)/.8 var(--display);letter-spacing:-.06em;color:rgba(252,252,248,.9);white-space:nowrap;pointer-events:none}
+.eco{display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+@media (max-width:600px){
+  .site-foot .wrap{padding-left:max(24px,env(safe-area-inset-left,0px));padding-right:max(24px,env(safe-area-inset-right,0px))}
+  .foot-row{padding-block:36px 24px;gap:20px}
+  .foot-row ul{gap:10px 20px}
+  .foot-legal{padding-block:0 32px;gap:10px;line-height:1.55}
+}
+.eco img{display:block}
+.eco .eco-text{font:600 12px var(--mono);border:1px solid var(--line);border-radius:999px;padding:5px 11px;color:var(--ink)}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;z-index:20}
+
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="top">
+    <a class="logo" href="#top"><b>t.</b>Tend</a>
+    <ul>
+      <li><a href="#how">How it works</a></li>
+      <li><a href="#estimate">Estimate</a></li>
+      <li><a href="#restore">Restore</a></li>
+      <li><a href="#method">Methodology</a></li>
+      <li><a href="#pricing">Pricing</a></li>
+    </ul>
+  </nav>
+
+  <header class="hero" id="top">
+    <div>
+      <h1>Every prompt leaves a mark. <em>Tend to it.</em></h1>
+      <p class="say">Tend estimates the energy, carbon, and water behind your Claude Code usage, then helps you fund carbon removal and water restoration in proportion to it.</p>
+      <div class="cta">
+        <button class="cmd" id="copyCmd" type="button" aria-label="Copy install command"><span>$</span> npx gettend-cli <i>copy</i></button>
+        <a class="ghost" href="#estimate">Estimate my footprint</a>
+      </div>
+    </div>
+
+    <div class="receipt" aria-label="Example footprint receipt">
+      <div class="head">
+        <b>tend.</b>
+        <small>Northwind · 8-person startup · week <span class="wkNum">43</span></small>
+        <small class="live">Live</small>
+      </div>
+      <ul class="lines" id="lines" aria-label="Projects this week"></ul>
+      <div class="tot">
+        <div><span>Tokens used</span><span id="rTok">0</span></div>
+        <div><span>Electricity used</span><span id="rKwh">0</span></div>
+        <div><span>Carbon emitted (CO₂e)</span><span id="rCo2">0</span></div>
+        <div><span>Water used</span><span id="rH2o">0</span></div>
+        <div class="big"><span>Your tab <small>to restore your footprint</small></span><span id="rTab">$0.00</span></div>
+      </div>
+      <div class="barcode" aria-hidden="true"></div>
+    </div>
+  </header>
+
+  <section class="chapter band" id="how">
+    <div class="sec-head"><h2>How it works</h2></div>
+    <ol class="route">
+      <li><span class="ico-box" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="4.5" width="18" height="15" rx="2"/><path d="M7 10l3 2.5L7 15"/><path d="M12.5 15H17"/></svg></span><b>Track</b><p>Reads token counts, models, and timestamps from Claude Code's local logs.</p><small>Never your prompts, code, or files.</small></li>
+      <li><span class="ico-box" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 4v16"/><path d="M8.5 4h7"/><path d="M8.5 20h7"/><circle cx="12" cy="10" r="2.2"/></svg></span><b>Estimate</b><p>Turns tokens into a low, middle, and high range for energy, carbon, and water.</p><small>Updates after each session.</small></li>
+      <li><span class="ico-box" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4.5h4.5"/><path d="M12 8.5v7"/><path d="M9.5 13l2.5 2.5 2.5-2.5"/></svg></span><b>Restore</b><p>Shows what carbon removal and water restoration you could fund, and records what you do.</p><small>You buy directly from the provider.</small></li>
+    </ol>
+  </section>
+
+  <section class="chapter" id="estimate">
+    <div class="sec-head"><h2>Estimate a month of building</h2><p>Adjust the inputs to match your usage. The range updates as you go.</p></div>
+    <div class="calc">
+      <div class="panel">
+        <div class="field">
+          <div class="row"><label class="label" for="tokRange">Tokens per month</label><strong class="mono" id="tokVal"></strong></div>
+          <input type="range" id="tokRange" min="0" max="100" value="62">
+          <span class="hint">Not sure? Tend reads your real number after setup.</span>
+        </div>
+        <div class="field">
+          <div class="row"><label class="label" for="cacheRange">Cached context</label><strong class="mono" id="cacheVal"></strong></div>
+          <input type="range" id="cacheRange" min="0" max="95" value="85">
+          <span class="hint">Rereading context takes less computation.</span>
+        </div>
+        <div class="field">
+          <div class="row"><label class="label" for="outRange">Generated output</label><strong class="mono" id="outVal"></strong></div>
+          <input type="range" id="outRange" min="1" max="30" value="3">
+          <span class="hint">Writing new tokens takes the most.</span>
+        </div>
+      </div>
+      <div class="calc-out">
+        <div class="out" aria-live="polite">
+          <div><span class="k">Energy</span><span class="v" id="oKwh"></span><span class="range" id="oKwhR"></span></div>
+          <div><span class="k">Carbon</span><span class="v" id="oCo2"></span><span class="range" id="oCo2R"></span></div>
+          <div><span class="k">Water</span><span class="v" id="oH2o"></span><span class="range" id="oH2oR"></span></div>
+          <div><span class="k">Equivalent action</span><span class="v" id="oCost"></span><span class="range">1× / 10× middle estimate</span></div>
+        </div>
+        <p class="hint">Estimates from public research. AI providers don't publish per-request data. <a href="/methodology">Assumptions →</a></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="chapter band" id="restore">
+    <div class="sec-head"><h2>What you can fund</h2><p>Tend suggests an amount and links to providers. You buy directly, then record it. Tend currently doesn't sell offsets.</p>
+      <p class="community" id="community" hidden><span class="dot" aria-hidden="true"></span>Tend users have restored <b id="cKg"></b> of CO₂ and <b id="cL"></b> of water so far.</p></div>
+    <div class="funds">
+      <div class="fund-block">
+        <h3>Carbon removal</h3>
+        <p>Durable removal that stores CO₂ for a defined period.</p>
+        <p class="kinds">Biochar · Enhanced rock weathering · Direct air capture</p>
+        <ul class="providers">
+          <li><a href="https://www.removecarbontoday.com/" target="_blank" rel="noopener"><strong>Remove Carbon Today</strong><span>Biochar from 1 kg, with a public registry record</span><em>↗</em></a></li>
+          <li><a href="https://www.carbonmark.com/buy-carbon-credits" target="_blank" rel="noopener"><strong>Carbonmark</strong><span>Marketplace of verified removal credits, from 1 kg</span><em>↗</em></a></li>
+          <li><a href="https://climeworks.com/actnow" target="_blank" rel="noopener"><strong>Climeworks</strong><span>Direct air capture, one-time or monthly</span><em>↗</em></a></li>
+        </ul>
+      </div>
+      <div class="fund-block w">
+        <h3>Water restoration</h3>
+        <p>Restoration in stressed watersheds, ideally near where computing happens.</p>
+        <p class="kinds">River restoration · Aquifer recharge · Leak reduction</p>
+        <ul class="providers">
+          <li><a href="https://www.b-e-f.org/" target="_blank" rel="noopener"><strong>Bonneville Environmental Foundation</strong><span>Water Restoration Certificates across many river basins</span><em>↗</em></a></li>
+          <li><a href="https://shop.climeco.com/product/water-restoration-certificate/" target="_blank" rel="noopener"><strong>ClimeCo</strong><span>Water Restoration Certificates, bought online</span><em>↗</em></a></li>
+          <li><a href="https://thefreshwatertrust.org/donate" target="_blank" rel="noopener"><strong>The Freshwater Trust</strong><span>River and watershed restoration with measured results</span><em>↗</em></a></li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section class="chapter" id="records">
+    <div class="sec-head"><h2>Show your record</h2><p>Add a small record to your site. It says “restored” only after you add proof in Tend. Hover over it to see the date it covers.</p></div>
+    <div class="records">
+      <figure>
+        <span class="pill" data-tip><b>t.</b><span><span class="bTok">0</span> tok · <span class="bCo2">0</span></span><span class="ok">✓ restored</span></span>
+        <figcaption>For a footer</figcaption>
+      </figure>
+      <figure>
+        <div class="label-card" aria-label="Footprint facts label" data-tip>
+          <h4>Footprint facts</h4>
+          <div><span>Tokens</span><span class="bTok">0</span></div>
+          <div><span>Energy</span><span class="bKwh">0</span></div>
+          <div><span>Carbon</span><span class="bCo2">0</span></div>
+          <div><span>Water</span><span class="bH2o">0</span></div>
+          <div><span>Estimate range</span><span class="bRange">0</span></div>
+          <div class="ok"><span>CO₂ removed</span><span><span class="bCo2">0</span> ✓</span></div>
+          <div class="ok"><span>Water restored</span><span><span class="bH2o">0</span> ✓</span></div>
+          <div><span>Tend's method version</span><span>2026-10</span></div>
+        </div>
+        <figcaption>For a case study</figcaption>
+      </figure>
+      <figure>
+        <div class="stub" data-tip>
+          <strong>Made with <span class="bTok">0</span> tokens</strong>
+          <span>Claude Code · October 2026</span>
+          <span>Models: 72% Opus · 28% Sonnet</span>
+          <span>Carbon: <em class="bCo2">0</em> CO₂e</span>
+          <span>Water: <em class="bH2o">0</em></span>
+          <span>Range: <em class="bRange">0</em></span>
+          <span class="ok">Funded: <span class="bCo2">0</span> CO₂ removal · <span class="bH2o">0</span> water ✓</span>
+          <span>Tend's method version: 2026-10</span>
+        </div>
+        <figcaption>For project credits</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="chapter band" id="method">
+    <div class="sec-head"><h2>Every number is an estimate</h2><p>Built from published research and provider disclosures, always shown as a low, middle, and high value.</p></div>
+    <ol class="facts">
+      <li id="n1"><b>Energy</b><span>From token type and published inference data</span></li>
+      <li id="n2"><b>Carbon</b><span>Energy × the grid's carbon intensity</span></li>
+      <li id="n3"><b>Water</b><span>Cooling plus water used to make the electricity</span></li>
+      <li id="n4"><b>Uncertainty</b><span>About 0.4× to 2.5× the middle estimate</span></li>
+    </ol>
+    <details class="more">
+      <summary>How Tend handles uncertainty, funding, and privacy</summary>
+      <dl class="principles">
+        <div><dt>Each figure comes with a range</dt><dd>Model efficiency, hardware, location, electricity, cooling, and weather all change the result. Until providers publish more granular data, Tend shows the range.</dd></div>
+        <div><dt>Funding sits beside your footprint</dt><dd>Removal or restoration doesn't make the original footprint disappear. Tend records what you estimated, what you funded, and the evidence.</dd></div>
+        <div><dt>Nothing you write leaves your computer</dt><dd>Tend runs locally and uses token counts, model names, timestamps, and the projects you track.</dd></div>
+      </dl>
+    </details>
+    <p class="ask-line">These would be measurements if AI providers published their numbers. <a class="readmore" href="/ask#top">Ask them to →</a></p>
+    <a class="readmore readmore-2" href="/methodology">Read the methodology →</a>
+  </section>
+
+  <section class="chapter" id="pricing">
+    <div class="sec-head"><h2>Free for you, ready for your team</h2><p>Tracking is free. When you fund something, the money goes straight to the provider.</p></div>
+    <div class="plans">
+      <div class="plan hi">
+        <div class="plan-head"><h3>Tracker</h3><span class="tag">Free</span></div>
+        <p class="plan-for">For individuals.</p>
+        <div class="price">$0</div>
+        <ul><li>Local footprint tracking</li><li>Energy, carbon, and water ranges</li><li>Project records and charts</li><li>A badge for your site</li></ul>
+        <button class="cmd" id="copyCmd3" type="button" aria-label="Copy install command"><span>$</span> npx gettend-cli <i>copy</i></button>
+      </div>
+      <div class="plan">
+        <div class="plan-head"><h3>Startup</h3><span class="tag">Coming soon</span></div>
+        <p class="plan-for">For teams building with Claude Code.</p>
+        <div class="price">$10<small> / seat / month</small></div>
+        <p class="price-note">$8 billed yearly · 3-seat minimum</p>
+        <ul><li>One footprint for the whole team</li><li>Records by project and client</li><li>A shared weekly restore budget</li><li>Reports for investors</li></ul>
+        <div class="plan-cta">
+          <button class="btn-cta" type="button" id="openWaitlist">Join the waitlist</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<section class="install" id="install">
+  <div class="wrap" style="display:grid;justify-items:center;gap:22px">
+    <h2>Install Tend.</h2>
+    <button class="cmd" id="copyCmd2" type="button" aria-label="Copy install command"><span>$</span> npx gettend-cli <i>copy</i></button>
+    <p>Free. Runs on your computer. Turn it off anytime.</p>
+  </div>
+</section>
+
+<dialog class="contact" id="waitlist" aria-labelledby="wlTitle">
+  <div class="contact-head">
+    <div>
+      <h3 id="wlTitle">Join the Startup waitlist</h3>
+      <p class="contact-sub">We're opening early access to 8 design partner teams, starting January 2027.</p>
+    </div>
+    <button class="contact-x" type="button" id="closeWaitlist" aria-label="Close">×</button>
+  </div>
+  <form id="teamForm" novalidate aria-labelledby="wlTitle">
+    <div class="contact-two">
+      <label class="wl-field"><span>Work email</span>
+        <input type="email" name="email" id="fEmail" autocomplete="email" placeholder="you@company.com" aria-describedby="eEmail" required>
+        <span class="err" id="eEmail" aria-live="polite"></span>
+      </label>
+      <label class="wl-field"><span>Company name</span>
+        <input type="text" name="company" id="fCompany" autocomplete="organization" aria-describedby="eCompany" required>
+        <span class="err" id="eCompany" aria-live="polite"></span>
+      </label>
+    </div>
+    <fieldset id="fSize" aria-describedby="eSize">
+      <legend>How many people on your team use AI coding tools?</legend>
+      <div class="chips">
+        <label class="chip"><input type="radio" name="teamSize" value="1-5"><span>1 to 5</span></label>
+        <label class="chip"><input type="radio" name="teamSize" value="6-20"><span>6 to 20</span></label>
+        <label class="chip"><input type="radio" name="teamSize" value="21-100"><span>21 to 100</span></label>
+        <label class="chip"><input type="radio" name="teamSize" value="100+"><span>100+</span></label>
+      </div>
+      <span class="err" id="eSize" aria-live="polite"></span>
+    </fieldset>
+    <fieldset id="fTools" aria-describedby="eTools">
+      <legend>Which tools does your team use? <small>Choose all that apply.</small></legend>
+      <div class="chips">
+        <label class="chip"><input type="checkbox" name="tools" value="Claude Code"><span>Claude Code</span></label>
+        <label class="chip"><input type="checkbox" name="tools" value="Cursor"><span>Cursor</span></label>
+        <label class="chip"><input type="checkbox" name="tools" value="GitHub Copilot"><span>GitHub Copilot</span></label>
+        <label class="chip"><input type="checkbox" name="tools" value="Other"><span>Other</span></label>
+      </div>
+      <span class="err" id="eTools" aria-live="polite"></span>
+    </fieldset>
+    <fieldset id="fDrivers" aria-describedby="eDrivers">
+      <legend>What's driving your interest? <small>Choose all that apply.</small></legend>
+      <div class="chips">
+        <label class="chip"><input type="checkbox" name="drivers" value="Company climate goals"><span>Company climate goals</span></label>
+        <label class="chip"><input type="checkbox" name="drivers" value="Sustainability reporting"><span>Sustainability reporting</span></label>
+        <label class="chip"><input type="checkbox" name="drivers" value="Customer or investor asks"><span>Customer or investor asks</span></label>
+        <label class="chip"><input type="checkbox" name="drivers" value="Personal values"><span>Personal values</span></label>
+        <label class="chip"><input type="checkbox" name="drivers" value="Other"><span>Other</span></label>
+      </div>
+      <span class="err" id="eDrivers" aria-live="polite"></span>
+    </fieldset>
+    <fieldset id="fOwner" aria-describedby="eOwner">
+      <legend>Does someone own sustainability or climate reporting at your company?</legend>
+      <div class="chips">
+        <label class="chip"><input type="radio" name="owner" value="A dedicated team"><span>A dedicated team</span></label>
+        <label class="chip"><input type="radio" name="owner" value="One person"><span>One person</span></label>
+        <label class="chip"><input type="radio" name="owner" value="Not yet"><span>Not yet</span></label>
+      </div>
+      <span class="err" id="eOwner" aria-live="polite"></span>
+    </fieldset>
+    <label class="wl-field"><span>What would make Tend for teams a must have for you? <small>(optional)</small></span>
+      <textarea name="mustHave" rows="3"></textarea>
+    </label>
+    <div class="form-foot">
+      <button class="btn-cta" type="submit">Join the waitlist</button>
+      <p class="err" id="eForm" aria-live="polite"></p>
+    </div>
+  </form>
+  <div class="thanks" id="thanks" role="status" tabindex="-1" hidden>
+    <span class="seal" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+    <h3>You're on the list.</h3>
+    <p>Thanks for telling us about your team. We'll email you when early access opens.</p>
+    <button class="btn-cta" type="button" id="doneWaitlist">Done</button>
+  </div>
+</dialog>
+
+<footer class="site-foot">
+  <div class="wrap foot-row">
+    <a class="logo" href="#top" style="color:var(--ink)"><b>t.</b>Tend</a>
+    <div class="foot-marks">
+    <div class="theme-switch" role="group" aria-label="Color theme">
+      <button type="button" data-theme-set="auto" aria-label="Match system" title="Match system"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M8 20h8M12 16v4"/></svg></button>
+      <button type="button" data-theme-set="light" aria-label="Light" title="Light"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/></svg></button>
+      <button type="button" data-theme-set="dark" aria-label="Dark" title="Dark"><svg viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></svg></button>
+    </div>
+    <!-- Tend's own footprint, live. Refresh footprint.json with `tend export ~/tend --out site/footprint.json` before each deploy. -->
+    <tend-badge src="/footprint.json"></tend-badge>
+    <!-- .eco trustmark. The text label shows only where the button image can't load. -->
+    <a class="eco" href="https://profiles.eco/gettend?ref=tm" rel="noopener">
+      <img class="eco-trustmark" id="ecoMark" alt=".eco profile for gettend.eco" src="https://trust.profiles.eco/gettend/eco-button.svg?color=%239F1744" style="max-width:4rem">
+      <span class="eco-text" id="ecoText" hidden>.eco verified profile ↗</span>
+    </a>
+    </div>
+      <ul class="foot-links">
+      <li><a href="/ask#top">Ask AI providers</a></li>
+    </ul>
+  </div>
+  <div class="wrap foot-legal">
+    <span>© 2026 Tend. Figures are estimates built from public research, since AI providers don't publish per-request measurements. The receipt shows example data.</span>
+    <span><a href="/privacy">Privacy</a> · <a href="https://github.com/get-tend/tend" rel="noopener">GitHub</a> · Photo: <a href="https://unsplash.com/photos/ESkw2ayO2As" rel="noopener">Luca Bravo on Unsplash</a></span>
+  </div>
+  <div class="foot-scene" role="img" aria-label="A calm river between tall pines, with misty mountains behind">
+    <span class="foot-word" aria-hidden="true">tend.</span>
+  </div>
+</footer>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+// Footprint model: middle estimates in Wh per 1k tokens; the full table is on the Methodology page.
+const F={out:1.0,inp:0.2,cache:0.05,pue:1.2,co2:0.35,water:3.5,lo:0.4,hi:2.5,removal:200,waterPerL:4/3785};
+function foot(tokens,cachedPct=.85,outPct=.03){
+  const c=tokens*cachedPct,o=tokens*outPct,i=Math.max(0,tokens-c-o);
+  const kwh=(c*F.cache+i*F.inp+o*F.out)/1e6*F.pue;
+  const co2=kwh*F.co2, L=kwh*F.water;
+  return {kwh,co2,L,cost:co2/1000*F.removal+L*F.waterPerL};
+}
+const fmtTok=n=>n>=1e9?(n/1e9).toFixed(2)+'B':n>=1e6?(n/1e6).toFixed(1)+'M':n>=1e3?Math.round(n/1e3)+'k':Math.round(n)+'';
+const fmtKg=kg=>kg<1?Math.round(kg*1000)+' g':kg.toFixed(kg<10?2:1)+' kg';
+const fmtL=L=>L<1?Math.round(L*1000)+' mL':L.toFixed(L<10?1:0)+' L';
+const fmtKwh=k=>k<1?Math.round(k*1000)+' Wh':k.toFixed(k<10?2:1)+' kWh';
+const $=id=>document.getElementById(id);
+const toast=msg=>{const t=$('toast');t.textContent=msg;t.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>t.hidden=true,2200)};
+const reduceMotion=matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// Example receipt: five teammates working right now (project, tokens so far, tokens added per update).
+const sessions=[
+  ['checkout · Apple Pay flow',64e6,120e3],
+  ['support-bot · eval run',51e6,90e3],
+  ['marketing-site · pricing page',38e6,70e3],
+  ['mobile-app · onboarding',29e6,50e3],
+  ['design-system · button tokens',17e6,30e3],
+];
+// About 2.1B tokens a week: eight people building with Claude Code most days.
+const BASE_WEEK=2.1e9;
+let week={tok:BASE_WEEK};
+
+// Totals count up like the receipt is being added up, and recount from the old value on each update.
+function tally(id,to,fmt,delay=0){
+  const el=$(id), from=+(el.dataset.v||0), run={};
+  el.dataset.v=to; el._run=run;
+  if(reduceMotion||from===to){el.textContent=fmt(to);return}
+  const start=performance.now()+delay, dur=700;
+  el.textContent=fmt(from);
+  el.classList.add('tick');
+  const step=now=>{
+    if(el._run!==run)return;
+    const t=Math.min(1,Math.max(0,(now-start)/dur));
+    el.textContent=fmt(from+(to-from)*(1-Math.pow(1-t,3)));
+    if(t<1)requestAnimationFrame(step);
+    else el.classList.remove('tick');
+  };
+  requestAnimationFrame(step);
+}
+function renderTotals(){
+  const f=foot(week.tok);
+  tally('rTok',week.tok,n=>Math.round(n).toLocaleString('en-US'),0);tally('rKwh',f.kwh,fmtKwh,70);
+  tally('rCo2',f.co2,fmtKg,140);tally('rH2o',f.L,fmtL,210);
+  tally('rTab',f.cost,v=>'$'+v.toFixed(2),280);
+}
+
+// The current ISO week number, so the receipt stays current without edits.
+(()=>{
+  const now=new Date(), mon=new Date(now.getFullYear(),now.getMonth(),now.getDate()-(now.getDay()+6)%7);
+  const thu=new Date(mon); thu.setDate(mon.getDate()+3);
+  const num=Math.floor(Math.round((thu-new Date(thu.getFullYear(),0,1))/864e5)/7)+1; // round: daylight saving shifts the gap by an hour
+  document.querySelectorAll('.wkNum').forEach(e=>e.textContent=num);
+})();
+
+// Calculator
+const tokScale=v=>Math.round(Math.pow(10,6+v/100*3)); // 1M .. 1B
+function renderCalc(){
+  const tok=tokScale(+$('tokRange').value), cp=+$('cacheRange').value/100;
+  let op=+$('outRange').value/100; if(cp+op>1)op=1-cp;
+  $('tokVal').textContent=fmtTok(tok);$('cacheVal').textContent=Math.round(cp*100)+'%';$('outVal').textContent=Math.round(op*100)+'%';
+  const f=foot(tok,cp,op);
+  // "Range: 3.36–21.0 kWh": drop the first unit when both ends share it.
+  const r=(v,fn)=>{const lo=fn(v*F.lo), hi=fn(v*F.hi), u=lo.split(' ')[1];
+    return `Range: ${u===hi.split(' ')[1]?lo.split(' ')[0]:lo}–${hi}`;};
+  $('oKwh').textContent=fmtKwh(f.kwh);$('oKwhR').textContent=r(f.kwh,fmtKwh);
+  $('oCo2').textContent=fmtKg(f.co2)+' CO₂e';$('oCo2R').textContent=r(f.co2,fmtKg);
+  $('oH2o').textContent=fmtL(f.L);$('oH2oR').textContent=r(f.L,fmtL);
+  $('oCost').innerHTML=`$${f.cost.toFixed(2)}<small> / $${(f.cost*10).toFixed(2)}</small>`;
+}
+['tokRange','cacheRange','outRange'].forEach(id=>$(id).addEventListener('input',renderCalc));
+
+['copyCmd','copyCmd2','copyCmd3'].forEach(id=>$(id).addEventListener('click',()=>{
+  navigator.clipboard?.writeText('npx gettend-cli').then(()=>toast('Copied. Paste it into Terminal.'),()=>toast('npx gettend-cli'));
+}));
+
+// Startup waitlist pop-up.
+// Sign-ups go to a private Google Sheet through its Apps Script web app (waitlist/apps-script.gs).
+// Nothing is sent while SIGNUP_URL is empty: the form only shows its thank-you state.
+const SIGNUP_URL='https://script.google.com/macros/s/AKfycbx4coq78hs8QiSyUalpdvuObPZfAn6Cm-n4fZvZk0QKIbf1r2zQpLl3EUjhMxVtSeQq/exec';
+async function submitSignup(data){
+  if(!SIGNUP_URL)return {ok:true,sent:false};
+  const body=new URLSearchParams({form:'startup',email:data.email,company:data.company,team_size:data.teamSize,
+    tools:data.tools.join(', '),drivers:data.drivers.join(', '),sustainability_owner:data.owner,must_have:data.mustHave});
+  // Apps Script doesn't let another site read its reply, so a network error is the only failure we can see.
+  await fetch(SIGNUP_URL,{method:'POST',mode:'no-cors',body});
+  return {ok:true,sent:true};
+}
+
+const waitlist=$('waitlist'), form=$('teamForm');
+$('openWaitlist').addEventListener('click',()=>{waitlist.showModal();$('fEmail').focus();});
+$('closeWaitlist').addEventListener('click',()=>waitlist.close());
+$('doneWaitlist').addEventListener('click',()=>waitlist.close());
+waitlist.addEventListener('click',e=>{if(e.target===waitlist)waitlist.close();});
+
+const emailOk=v=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+const checked=name=>[...form.querySelectorAll(`input[name="${name}"]:checked`)].map(i=>i.value);
+// Each rule: the element to mark, its message slot, and the message when it fails.
+function validate(){
+  const rules=[
+    [$('fEmail'),'eEmail',()=>!form.email.value.trim()?'Enter your work email.':!emailOk(form.email.value.trim())?'Enter an email like name@company.com.':''],
+    [$('fCompany'),'eCompany',()=>form.company.value.trim()?'':'Enter your company name.'],
+    [$('fSize'),'eSize',()=>checked('teamSize').length?'':'Choose a team size.'],
+    [$('fTools'),'eTools',()=>checked('tools').length?'':'Choose at least one tool.'],
+    [$('fDrivers'),'eDrivers',()=>checked('drivers').length?'':'Choose at least one reason.'],
+    [$('fOwner'),'eOwner',()=>checked('owner').length?'':'Choose one.'],
+  ];
+  let first=null;
+  for(const [el,errId,check] of rules){
+    const msg=check();
+    $(errId).textContent=msg;
+    el.setAttribute('aria-invalid',!!msg);
+    if(msg&&!first)first=el;
+  }
+  return first;
+}
+// Once a field has an error, re-check as it's fixed.
+['input','change'].forEach(t=>form.addEventListener(t,()=>{if(form.querySelector('[aria-invalid="true"]'))validate()}));
+form.addEventListener('submit',async e=>{
+  e.preventDefault();
+  $('eForm').textContent='';
+  const bad=validate();
+  if(bad){(bad.matches('fieldset')?bad.querySelector('input'):bad).focus();return}
+  const button=form.querySelector('[type=submit]');
+  button.disabled=true;
+  try{
+    await submitSignup({email:form.email.value.trim(),company:form.company.value.trim(),teamSize:checked('teamSize')[0],
+      tools:checked('tools'),drivers:checked('drivers'),owner:checked('owner')[0],mustHave:form.mustHave.value.trim()});
+    form.hidden=true;$('thanks').hidden=false;$('thanks').focus();
+  }catch{
+    $('eForm').textContent="That didn't go through. Try again in a moment.";
+    button.disabled=false;
+  }
+});
+
+// Theme switch in the footer. System follows the browser; Light and Dark are remembered on this device.
+const themeButtons=document.querySelectorAll('[data-theme-set]');
+const showTheme=t=>themeButtons.forEach(b=>b.setAttribute('aria-pressed',b.dataset.themeSet===t));
+showTheme(document.documentElement.dataset.theme||'auto');
+themeButtons.forEach(b=>b.addEventListener('click',()=>{
+  const t=b.dataset.themeSet;
+  if(t==='auto')delete document.documentElement.dataset.theme;else document.documentElement.dataset.theme=t;
+  try{t==='auto'?localStorage.removeItem('tend.theme'):localStorage.setItem('tend.theme',t)}catch{}
+  showTheme(t);
+}));
+
+// The shared total: purchases with proof that Tend users chose to count. Hidden until there's something to show.
+fetch('/api/total').then(r=>r.ok?r.json():null).then(t=>{
+  if(!t||!(t.co2Kg>0))return;
+  $('cKg').textContent=t.co2Kg>=1000?(t.co2Kg/1000).toFixed(1)+' t':Math.round(t.co2Kg).toLocaleString('en-US')+' kg';
+  $('cL').textContent=t.waterL>=1e6?(t.waterL/1e6).toFixed(1)+' million L':Math.round(t.waterL).toLocaleString('en-US')+' L';
+  $('community').hidden=false;
+}).catch(()=>{});
+
+// Jump links glide to their section; with reduced motion they jump straight there.
+document.querySelectorAll('a[href^="#"]').forEach(a=>a.addEventListener('click',e=>{
+  const target=document.getElementById(a.getAttribute('href').slice(1));
+  if(!target)return;
+  e.preventDefault();
+  target.scrollIntoView({behavior:reduceMotion?'auto':'smooth',block:'start'});
+}));
+
+// The .eco button image is hosted by .eco; fall back to a text label where it can't load.
+const ecoMark=$('ecoMark');
+const ecoFallback=()=>{ecoMark.hidden=true;$('ecoText').hidden=false};
+if(ecoMark.complete&&!ecoMark.naturalWidth)ecoFallback();else ecoMark.addEventListener('error',ecoFallback);
+
+// The records describe one finished project, so they stay fixed while the receipt runs live.
+const PROJECT_TOK=43.2e6, fb=foot(PROJECT_TOK);
+document.querySelectorAll('.bTok').forEach(e=>e.textContent=fmtTok(PROJECT_TOK));
+document.querySelectorAll('.bCo2').forEach(e=>e.textContent=fmtKg(fb.co2));
+document.querySelectorAll('.bKwh').forEach(e=>e.textContent=fmtKwh(fb.kwh));
+document.querySelectorAll('.bH2o').forEach(e=>e.textContent=fmtL(fb.L));
+document.querySelectorAll('.bRange').forEach(e=>e.textContent=`${fmtKg(fb.co2*F.lo)}–${fmtKg(fb.co2*F.hi)}`);
+// The sample was funded ten days ago, so its date stays recent.
+const through=new Date(Date.now()-10*864e5).toLocaleDateString('en-US',{month:'short',day:'numeric'});
+document.querySelectorAll('.records [data-tip]').forEach(e=>{
+  // A styled tooltip: the artifact viewer doesn't show native title text. Focus shows it too.
+  e.dataset.tip=`Restored through ${through}, with proof`;
+  e.tabIndex=0;
+  e.setAttribute('aria-description',`${fmtTok(PROJECT_TOK)} tokens, about ${fmtKg(fb.co2)} CO₂e. Restored through ${through}, with proof`);
+});
+
+// One line per project on the receipt, each ticking up as its session runs.
+function renderLines(first){
+  const ul=$('lines');
+  if(first)ul.innerHTML=sessions.map((r,i)=>`<li><span class="what">${r[0]}</span><span class="amt" id="ln${i}"></span><span class="sub" id="ls${i}"></span></li>`).join('');
+  sessions.forEach((r,i)=>{
+    const f=foot(r[1]), a=$('ln'+i);
+    a.textContent=fmtKg(f.co2);
+    $('ls'+i).textContent=`claude-code · ${fmtTok(r[1])} tok · ${fmtL(f.L)}`;
+    if(!first&&!reduceMotion){a.classList.add('tick');setTimeout(()=>a.classList.remove('tick'),350)}
+  });
+}
+renderLines(true);
+renderTotals();renderCalc();
+
+// Live: about every 1.5 seconds each running session adds a little to the week's totals.
+setInterval(()=>{
+  sessions.forEach(row=>{
+    const add=row[2]*(0.6+Math.random()*0.8);
+    row[1]+=add; week.tok+=add;
+  });
+  renderLines();renderTotals();
+},1500);
+</script>
+<script type="module" src="https://unpkg.com/gettend-cli@1/badge/tend-badge.js"></script>
+</body>
+</html>

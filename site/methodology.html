@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Methodology · Tend</title>
+<meta name="description" content="How Tend estimates the energy, carbon, and water of Claude Code usage: factors, ranges, sources, and what we don't know.">
+<link rel="canonical" href="https://gettend.eco/methodology">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Tend">
+<meta property="og:title" content="Tend methodology">
+<meta property="og:description" content="How Tend estimates the energy, carbon, and water of Claude Code usage: factors, ranges, sources, and what we don't know.">
+<meta property="og:url" content="https://gettend.eco/methodology">
+<meta property="og:image" content="https://gettend.eco/og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Every prompt leaves a mark. Tend to it.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Tend methodology">
+<meta name="twitter:description" content="How Tend estimates the energy, carbon, and water of Claude Code usage: factors, ranges, sources, and what we don't know.">
+<meta name="twitter:image" content="https://gettend.eco/og.png">
+<!-- Cookieless page counts. Turn on Web Analytics for this project in Vercel; until then this request just 404s. -->
+<script defer src="/_vercel/insights/script.js"></script>
+<script>
+// Uses the theme chosen in the homepage footer, if any.
+try{const t=localStorage.getItem('tend.theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch{}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: a methods appendix. One readable column, the table set wide, notes in the margin of the text. */
+:root{
+  --bg:#E9EEEA; --surface:#F6F8F5; --paper:#FCFCF8; --ink:#13201A; --muted:#55645C; --line:#C9D3CC; --moss:#2E6A4C;
+  --display:"Bricolage Grotesque","Avenir Next",system-ui,sans-serif;
+  --body:"Instrument Sans","Helvetica Neue",system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0E1512;--surface:#151E1A;--paper:#1C2621;--ink:#E4ECE6;--muted:#97A79E;--line:#2C3A33;--moss:#7CC39C;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0E1512;--surface:#151E1A;--paper:#1C2621;--ink:#E4ECE6;--muted:#97A79E;--line:#2C3A33;--moss:#7CC39C;color-scheme:dark}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.65 var(--body);-webkit-font-smoothing:antialiased}
+.wrap{max-width:820px;margin:0 auto;padding:40px max(16px,env(safe-area-inset-right,0px)) 120px max(16px,env(safe-area-inset-left,0px))}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--moss);outline-offset:3px;border-radius:6px}
+.back{font-size:14px;color:var(--muted);text-decoration:none}
+.back:hover{color:var(--ink)}
+h1,h2{font-family:var(--display);letter-spacing:-.025em;line-height:1.05;text-wrap:balance;margin:0}
+h1{font-size:clamp(40px,6vw,64px);font-weight:800;margin-top:40px}
+h2{font-size:28px;font-weight:800;margin-top:72px}
+p{margin:16px 0 0;max-width:64ch}
+.lead{font-size:20px}
+.muted{color:var(--muted)}
+.mono{font-family:var(--mono)}
+.formula{margin-top:20px;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:18px 20px;font:14px/1.9 var(--mono);overflow-x:auto;white-space:pre}
+.tbl{margin-top:24px;overflow-x:auto;border:1px solid var(--line);border-radius:14px;background:var(--paper)}
+table{width:100%;border-collapse:collapse;font-size:15px;min-width:600px}
+th,td{text-align:left;padding:12px 16px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-weight:600;color:var(--muted);background:var(--surface);font-size:13px}
+td.n{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap}
+tr:last-child td{border-bottom:0}
+ul{margin:16px 0 0;padding-left:20px;display:grid;gap:6px;max-width:64ch}
+.aside{margin-top:24px;border-left:3px solid var(--moss);padding-left:16px}
+.log{list-style:none;margin:24px 0 0;padding:0;border-top:1px solid var(--line);max-width:64ch}
+.log li{display:grid;grid-template-columns:90px 1fr;gap:2px 16px;padding:14px 0;border-bottom:1px solid var(--line)}
+.log b{color:var(--moss);font-weight:600}
+.log small{grid-column:2;color:var(--muted);font-size:13px}
+.version{margin-top:72px;padding-top:20px;border-top:1px solid var(--line);font:13px var(--mono);color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap" id="top">
+  <a class="back" href="/">← Tend</a>
+  <h1>Methodology</h1>
+  <p class="lead">Every figure in Tend is an estimate. AI providers don't publish enough infrastructure data to calculate the energy, carbon, or water of a single request exactly. Tend uses published research and provider disclosures to calculate a low, middle, and high estimate, and shows the range.</p>
+
+  <h2>How the estimate is calculated</h2>
+  <p>Tend counts four kinds of tokens from Claude Code's local usage logs: generated output, fresh input, cache writes, and cached input. Each kind gets an energy factor, then:</p>
+<pre class="formula">energy  = Σ (tokens × Wh per token) × data-center overhead (PUE)
+carbon  = energy × grid carbon intensity
+water   = energy × water per kWh
+range   = middle estimate × 0.4 (low) … × 2.5 (high)</pre>
+
+  <h2>Assumptions</h2>
+  <div class="tbl">
+    <table>
+      <thead><tr><th>Factor</th><th>Middle estimate</th><th>Range</th><th>Basis</th></tr></thead>
+      <tbody>
+        <tr><td>Generated tokens</td><td class="n">1.0 Wh / 1k</td><td class="n">0.4–2.5</td><td>Published estimates and provider disclosures</td></tr>
+        <tr><td>Fresh input tokens</td><td class="n">0.2 Wh / 1k</td><td class="n">0.08–0.5</td><td>Relative inference-cost estimates</td></tr>
+        <tr><td>Cached input tokens</td><td class="n">0.05 Wh / 1k</td><td class="n">0.02–0.12</td><td>Cache-compute proxy</td></tr>
+        <tr><td>Data-center overhead</td><td class="n">1.2× PUE</td><td class="n">1.1–1.4×</td><td>Hyperscaler reporting</td></tr>
+        <tr><td>Grid carbon</td><td class="n">0.35 kg CO₂e / kWh</td><td class="n">0.1–0.6</td><td>Regional electricity data</td></tr>
+        <tr><td>Water</td><td class="n">3.5 L / kWh</td><td class="n">1.0–5.0</td><td>Cooling plus electricity-related water estimates</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="muted">Cached input makes up most of a coding agent's tokens, so the cached-input factor matters most and is the least certain. These factors will change as better measurements become public.</p>
+
+  <h2>What we don't know</h2>
+  <p>For any single request, we usually don't know:</p>
+  <ul>
+    <li>which hardware handled it</li>
+    <li>the exact energy it consumed</li>
+    <li>which data center ran it</li>
+    <li>that facility's cooling system</li>
+    <li>the electricity mix at that moment</li>
+    <li>the facility's water consumption</li>
+  </ul>
+  <p>Tend shows that uncertainty openly, as a range around each number.</p>
+
+  <h2>What funding means</h2>
+  <p>Paying for carbon removal or water restoration doesn't make the original footprint disappear. Tend records what you estimated, what you funded, and whatever evidence the provider gives you.</p>
+  <p>Water is local. Restoration in one watershed supports an equivalent amount; it doesn't replace water used somewhere else.</p>
+
+  <h2>What Tend reads</h2>
+  <p>Tend runs on your computer. It reads token counts, model names, timestamps, and the projects you choose to track from Claude Code's local logs. It doesn't read your prompts, code, files, or project contents. It sends nothing anywhere, unless you choose to add a purchase to Tend's shared total, which sends only that purchase's amounts and proof link.</p>
+
+  <h2>Why this matters</h2>
+  <p class="aside">AI should run without burning fossil fuels or using up fresh water, and every Tend estimate measures the distance from that standard. Most of AI's water is used at power plants: US data centers consumed about 17 billion gallons directly in 2023, and their electricity used roughly 211 billion more (Lawrence Berkeley National Laboratory). Hourly carbon-free power on the local grid and sealed cooling that evaporates nothing would solve both. Until providers publish energy, carbon, and water for every request, Tend shows a range, and this method changes when better data arrives. <a href="/ask">Ask providers to publish it →</a></p>
+
+  <h2 id="changelog">Changelog</h2>
+  <p>Tend reviews these factors every quarter and updates them when a factor changes or a major new source is published. Each footprint file and each recorded purchase stores the method version used. After an update, a funded badge keeps its check for 30 days so you can fund any difference in the new estimate.</p>
+  <ol class="log">
+    <li><b class="mono">2026-10</b><span>First published method. Factors as listed under Assumptions.</span><small>October 1, 2026</small></li>
+  </ol>
+
+  <p class="version">Method version 2026-10 · next review January 2027</p>
+</div>
+<script>
+// Always open at the top, even if the browser would restore an earlier scroll position.
+if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+window.scrollTo(0, 0);
+addEventListener('pageshow', () => window.scrollTo(0, 0));
+</script>
+</body>
+</html>
