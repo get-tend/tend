@@ -4,6 +4,7 @@
 
 - The page responds right away when you pick a restore amount, and saves the choice in the background.
 - The page reuses its last scan until a Claude Code log changes, so it reloads in a moment instead of several seconds.
+- Each restore amount now shows exactly what to buy, both carbon removal and water restoration, and fills in the form. The split slider is gone.
 - Placeholder "<synthetic>" entries Claude Code writes for interrupted or failed requests no longer show as a model.
 
 ## 1.0.0

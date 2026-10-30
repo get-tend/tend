@@ -216,7 +216,6 @@ form{display:grid;gap:16px}
 .bp-stub i{color:var(--ink)}
 .bp-stub .ok{color:var(--moss)}
 .card>*{min-width:0}
-#splitRange{width:100%;accent-color:var(--moss)}
 .restore{gap:20px}
 .options,.styles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 @media (max-width:640px){.options,.styles{grid-template-columns:1fr}}
@@ -562,8 +561,6 @@ function trackedView(p, justSettled) {
       <div class="options" role="group" aria-label="How much to restore">${options}</div>
       <div class="field">
         <div class="row"><span><b>Carbon removal</b> <span class="mono" id="cUsd"></span> <span class="muted" id="cAmt"></span></span><span><b>Water restoration</b> <span class="mono" id="wUsd"></span> <span class="muted" id="wAmt"></span></span></div>
-        <input type="range" id="splitRange" min="10" max="95" aria-label="Split between carbon removal and water restoration">
-        <span class="hint">Slide to split the amount between carbon removal and water restoration.</span>
       </div>
       <div class="where">
         <div><h3>Buy carbon removal</h3><ul class="providers">${provs('carbon')}</ul></div>
@@ -728,15 +725,17 @@ function wire(p) {
   const form = $('settleForm');
   if (!form) return;
   const q = p.quote;
-  // The chosen option sets the amount; the slider splits it between carbon and water and fills in the form.
+  // The chosen option says exactly what to buy (both parts are needed to restore) and fills in the form.
   // Picking an option updates the amounts on the spot and saves the choice in the background.
-  let pl = plan(q, q.multiplier);
-  const split = $('splitRange');
+  const fill = (m) => {
+    const pl = plan(q, m);
+    $('cUsd').textContent = usd(pl.carbonUsd); $('cAmt').textContent = `${pl.kgs} kg`;
+    $('wUsd').textContent = usd(pl.waterUsd); $('wAmt').textContent = `${pl.certs} certificate${pl.certs > 1 ? 's' : ''} (1,000 gal each)`;
+    $('co2Kg').value = pl.kgs; $('waterGal').value = pl.certs * 1000; $('usd').placeholder = pl.usd.toFixed(2);
+  };
   const choose = (m) => {
-    pl = plan(q, m);
-    split.value = Math.round((pl.carbonUsd / pl.usd) * 100);
     document.querySelectorAll('.opt[data-m]').forEach((o) => o.setAttribute('aria-pressed', Number(o.dataset.m) === m));
-    applySplit();
+    fill(m);
   };
   document.querySelectorAll('.opt[data-m]').forEach((b) => b.addEventListener('click', async () => {
     const m = Number(b.dataset.m), before = q.multiplier;
@@ -746,16 +745,7 @@ function wire(p) {
     try { await api('track', { project: p.path, multiplier: m, out: p.link.out }); }
     catch (e) { q.multiplier = before; choose(before); toast(`Couldn't save that: ${e.message}`); }
   }));
-  split.value = Math.round((pl.carbonUsd / pl.usd) * 100);
-  const applySplit = () => {
-    const share = split.value / 100, cUsd = pl.usd * share, wUsd = pl.usd - cUsd;
-    const kgs = Math.max(1, Math.floor(cUsd / S.prices.usdPerKg)), certs = Math.max(1, Math.floor(wUsd / S.prices.usdPerCertificate));
-    $('cUsd').textContent = usd(cUsd); $('cAmt').textContent = `≈ ${kgs} kg`;
-    $('wUsd').textContent = usd(wUsd); $('wAmt').textContent = `≈ ${certs} certificate${certs > 1 ? 's' : ''}`;
-    $('co2Kg').value = kgs; $('waterGal').value = certs * 1000; $('usd').placeholder = (kgs * S.prices.usdPerKg + certs * S.prices.usdPerCertificate).toFixed(2);
-  };
-  split.addEventListener('input', applySplit);
-  applySplit();
+  fill(q.multiplier);
 
   form.addEventListener('submit', async (ev) => {
     ev.preventDefault();
