@@ -1,0 +1,13 @@
+# Changelog
+
+## 1.0.0 (unreleased)
+
+First release.
+
+- Footprint for every Claude Code project: energy, CO2e and water as low, middle and high estimates.
+- `gettend` opens a local page to track projects, see what to buy, and record purchases.
+- Optional hook updates footprints after every Claude Code turn. It shows the exact settings change and asks before adding it.
+- Badge for your site, read from each project's `footprint.json`.
+- Badges: pill, label and stub. Each says "restored" only with checked proof, shows the covered date on hover, matches the light or dark page it sits on, and keeps its check for 30 days after the latest purchase before showing the share restored.
+- Method versions: each purchase stores the method it used, and a method update gives 30 days to fund any difference.
+- No dependencies. Makes no network requests, checked by `npm test`.

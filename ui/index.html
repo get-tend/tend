@@ -1,0 +1,804 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>tend</title>
+<style>
+/* Layout: projects down the left like a ledger; the selected project's receipt and the three steps to settle it on the right. */
+:root{
+  --bg:#E9EEEA; --surface:#F6F8F5; --paper:#FCFCF8; --ink:#13201A; --muted:#55645C; --line:#C9D3CC;
+  --moss:#2E6A4C; --water:#2A6A8C; --stamp:#B5462F; --moss-soft:#D3E4D9; --water-soft:#D2E3EC; --warn-soft:#F3E6D6; --warn:#8A5A1C;
+  --display:"Bricolage Grotesque","Avenir Next",system-ui,sans-serif;
+  --body:"Instrument Sans","Helvetica Neue",system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,"SF Mono",Menlo,monospace;
+  --shadow:0 1px 0 rgba(19,32,26,.05),0 18px 40px -22px rgba(19,32,26,.35);
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0E1512; --surface:#151E1A; --paper:#1C2621; --ink:#E4ECE6; --muted:#97A79E; --line:#2C3A33;
+  --moss:#7CC39C; --water:#7BB8D8; --stamp:#E58A70; --moss-soft:#1F3328; --water-soft:#1C2E38; --warn-soft:#33281A; --warn:#E2B77A;
+  --shadow:0 1px 0 rgba(0,0,0,.3),0 18px 40px -22px rgba(0,0,0,.8); color-scheme:dark}}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:15px/1.55 var(--body);-webkit-font-smoothing:antialiased}
+h1,h2,h3{font-family:var(--display);margin:0;letter-spacing:-.02em;line-height:1.1;text-wrap:balance}
+p{margin:0}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--water);outline-offset:2px;border-radius:6px}
+[hidden]{display:none!important}
+.mono{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 24px;border-bottom:1px dashed var(--line);flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:10px;font:800 20px var(--display);letter-spacing:-.02em}
+.logo b{display:grid;place-items:center;width:32px;height:32px;border-radius:50%;background:var(--ink);color:var(--bg);font:600 12px var(--mono)}
+.auto{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--moss)}
+.dot.off{background:var(--line)}
+
+.banner{margin:16px 24px 0;background:var(--paper);border:1px solid var(--line);border-left:3px solid var(--moss);border-radius:12px;padding:12px 16px;display:flex;gap:12px 20px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.banner p{max-width:72ch;font-size:14px;color:var(--muted)}
+.banner strong{color:var(--ink);font-weight:600}
+.banner-actions{display:flex;gap:14px;align-items:center}
+.btn.small{padding:8px 14px;font-size:14px}
+.banner details{flex-basis:100%;font-size:13px}
+.banner summary{cursor:pointer;color:var(--muted);text-decoration:underline}
+.banner pre{margin:10px 0 0;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:12px;font:12px/1.5 var(--mono);overflow-x:auto;white-space:pre}
+
+.app{display:grid;grid-template-columns:300px 1fr;gap:24px;padding:24px;align-items:start}
+.app>*{min-width:0}
+@media (max-width:860px){.app{grid-template-columns:1fr}}
+
+.list{display:grid;gap:6px}
+.list h2{font-size:16px;font-weight:600;margin:14px 12px 4px}
+.proj{display:grid;grid-template-columns:1fr auto;gap:2px 10px;text-align:left;background:none;border:1px solid transparent;border-radius:12px;padding:10px 12px;cursor:pointer;width:100%}
+.proj:hover{background:var(--surface)}
+.proj[aria-current="true"]{background:var(--paper);border-color:var(--line);box-shadow:var(--shadow)}
+.proj .n{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.proj .s{grid-column:1/-1;font:12px var(--mono);color:var(--muted)}
+.chip{font:600 11px var(--mono);border-radius:999px;padding:3px 8px;white-space:nowrap;align-self:center}
+.chip.ok{background:var(--moss-soft);color:var(--moss)}
+.chip.due{background:var(--warn-soft);color:var(--warn)}
+.chip.off{border:1px solid var(--line);color:var(--muted)}
+.more{background:none;border:0;color:var(--muted);font-size:13px;padding:6px 12px;cursor:pointer;text-align:left;text-decoration:underline}
+
+.main{display:grid;gap:20px;grid-template-columns:minmax(0,1fr)}
+@media (max-width:560px){.app{padding:16px;gap:16px}.top{padding:14px 16px}.banner{margin:12px 16px 0}.card{padding:18px}.receipt{padding:20px 18px 30px}.form-foot .field{width:100%}.hist div{grid-template-columns:1fr;gap:4px}.wk-stat.lead b{font-size:32px}.wk-stat b{font-size:24px}.style-stage{height:auto;min-height:180px}}
+.receipt{background:var(--paper);box-shadow:var(--shadow);padding:24px;position:relative;font-variant-numeric:tabular-nums;
+  -webkit-mask:radial-gradient(circle 7px at 50% 100%,#0000 98%,#000) 0 0/16px 100% repeat-x;mask:radial-gradient(circle 7px at 50% 100%,#0000 98%,#000) 0 0/16px 100% repeat-x;padding-bottom:32px}
+.receipt .pname{font-size:18px;font-weight:600;color:var(--muted)}
+.receipt .status{font-size:clamp(24px,2.8vw,32px);font-weight:800;margin-top:6px}
+.receipt .meta{font:12px var(--mono);color:var(--muted);margin-top:6px;overflow-wrap:anywhere}
+.figs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:22px;padding-top:18px;border-top:1px dashed var(--line)}
+@media (max-width:560px){.figs{grid-template-columns:1fr}}
+.fig{display:grid;gap:2px}
+.fig .v{font:600 26px var(--mono);letter-spacing:-.02em}
+.fig .k{font-size:13px;color:var(--muted)}
+.fig .r{font:11.5px var(--mono);color:var(--muted)}
+.stamp{position:absolute;right:22px;top:22px;transform:rotate(-9deg);border:2px solid var(--moss);color:var(--moss);font:600 12px var(--mono);letter-spacing:.1em;padding:5px 9px;border-radius:6px}
+.stamp.pop{animation:stamp .5s cubic-bezier(.2,.9,.3,1.4)}
+@keyframes stamp{from{transform:rotate(-9deg) scale(2.2);opacity:0}to{transform:rotate(-9deg) scale(1);opacity:1}}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px;display:grid;gap:14px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.chips{display:flex;gap:6px}
+.extra summary{cursor:pointer;font-size:13px;color:var(--muted);text-decoration:underline;width:max-content}
+.extra .chips{margin-top:10px}
+
+.steps{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+@media (max-width:700px){.steps{grid-template-columns:1fr}}
+.step{border-radius:16px;padding:20px;display:grid;gap:8px;align-content:start}
+.step.c{background:var(--moss-soft)}
+.step.w{background:var(--water-soft)}
+.step h3,.card h3{font-size:18px;font-weight:600}
+.step .big{font:600 28px var(--mono);letter-spacing:-.02em}
+.step p{font-size:14px;color:var(--muted)}
+.step a{color:var(--ink);font-weight:600}
+
+form{display:grid;gap:16px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 16px}
+@media (max-width:640px){.grid{grid-template-columns:1fr}}
+.field{display:grid;gap:6px;min-width:0}
+.field label{font-size:13px;font-weight:600}
+.field input,.field select{background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:10px 12px;width:100%}
+.field input[aria-invalid="true"]{border-color:var(--stamp)}
+.field .err{font-size:12.5px;color:var(--stamp)}
+.field .hint{font-size:12.5px;color:var(--muted)}
+.unit{position:relative}
+.unit input{padding-right:52px}
+.unit span{position:absolute;right:12px;top:50%;transform:translateY(-50%);font:12px var(--mono);color:var(--muted)}
+
+.preview{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--paper);border:1px dashed var(--line);border-radius:12px;padding:12px 14px;font:12.5px var(--mono)}
+.preview .ok{color:var(--moss);font-weight:600}
+.preview .warn{color:var(--warn)}
+
+.btn{border:0;border-radius:12px;background:var(--moss);color:var(--paper);padding:12px 18px;font-weight:600;cursor:pointer}
+.btn:hover{filter:brightness(1.07)}
+.btn[disabled]{opacity:.5;cursor:default}
+.btn.ghost{background:none;color:var(--ink);border:1px solid var(--line)}
+.btn.dark{background:var(--ink);color:var(--bg)}
+.link{background:none;border:0;padding:0;color:var(--muted);text-decoration:underline;cursor:pointer;font-size:13px}
+.link.danger{color:var(--stamp)}
+
+.hist{display:grid;gap:0}
+.hist div{display:grid;grid-template-columns:auto 1fr auto;gap:12px;padding:10px 0;border-top:1px solid var(--line);font-size:13.5px;align-items:baseline}
+.hist div:first-child{border-top:0}
+.hist a{color:inherit}
+.empty{padding:40px;text-align:center;color:var(--muted)}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;z-index:5}
+
+/* Usage charts: one series (weekly carbon) in one hue, and a ranked list of models. */
+.usage{gap:18px}
+.usage h3{font-size:18px}
+.usage .hint{font-size:13px;color:var(--muted)}
+.usage summary{cursor:pointer;width:max-content}
+.usage .chart{position:relative}
+.wk-stats{display:flex;flex-wrap:wrap;gap:16px 40px;align-items:flex-start}
+.wk-stat{display:grid;gap:6px}
+.wk-stat small{font-size:12.5px;color:var(--muted)}
+.wk-stat b{font:700 30px/1 var(--display);letter-spacing:-.025em;font-variant-numeric:tabular-nums}
+.wk-stat b em{font:500 14px var(--body);color:var(--muted);font-style:normal;margin-left:4px;letter-spacing:0}
+.wk-stat.lead b{font-size:40px}
+.wk-stat.lead{margin-right:auto}
+.wk-delta{font:12px var(--mono);color:var(--muted);background:var(--paper);border:1px solid var(--line);border-radius:99px;padding:3px 9px;width:max-content}
+.plot{position:relative;height:132px;display:grid;grid-template-columns:repeat(var(--n),1fr);grid-template-rows:100%;gap:6px;align-items:end;border-bottom:1px solid var(--line);margin-top:12px}
+.wk{height:100%;display:flex;align-items:flex-end;justify-content:center;outline:none;border-radius:6px}
+.wk i{display:block;width:min(100%,26px);height:var(--h);min-height:2px;border-radius:5px 5px 1px 1px;background:color-mix(in srgb,var(--moss) 30%,var(--surface));transform-origin:bottom;animation:grow .6s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i) * 35ms);transition:background .15s}
+.wk.now i{background:var(--moss)}
+.wk.zero i{background:var(--line)}
+.wk:hover i,.wk:focus-visible i{background:var(--water)}
+.wk:focus-visible{box-shadow:0 0 0 2px var(--water)}
+@keyframes grow{from{transform:scaleY(0)}}
+@media (prefers-reduced-motion:reduce){.wk i{animation:none}}
+.avg{position:absolute;left:0;right:0;border-top:1.5px dashed color-mix(in srgb,var(--muted) 55%,transparent);pointer-events:none;z-index:1}
+.avg span{position:absolute;left:0;bottom:4px;font:11px var(--mono);color:var(--muted);background:var(--surface);padding-right:6px}
+.xlab{display:grid;grid-template-columns:repeat(var(--n),1fr);gap:6px;font:11px var(--mono);color:var(--muted);text-align:center;margin-top:8px;white-space:nowrap}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--bg);font:12px/1.4 var(--mono);padding:6px 9px;border-radius:8px;white-space:nowrap;transform:translate(-50%,-100%);margin-top:-8px;z-index:2}
+.models{display:grid;gap:10px}
+.model{display:grid;grid-template-columns:minmax(70px,auto) 1fr auto;gap:12px;align-items:center;font-size:13.5px}
+.model .track{height:10px;border-radius:99px;background:var(--line);overflow:hidden}
+.model .track i{display:block;height:100%;border-radius:99px;background:var(--moss)}
+.model .num{font:12.5px var(--mono);color:var(--muted);white-space:nowrap}
+.usage table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+.usage th,.usage td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line)}
+.usage th{font-weight:600;color:var(--muted)}
+.usage td.n{font-family:var(--mono);text-align:right}
+
+/* shared card header, form groups */
+.card{padding:24px;gap:20px}
+.card-head{display:flex;gap:14px;align-items:flex-start}
+.card-head > div{display:grid;gap:4px;min-width:0;flex:1}
+.card-head h2{font:600 20px/1.2 var(--display);letter-spacing:-.015em}
+.card-head p{font-size:14px;color:var(--muted);max-width:62ch}
+.card-head .head-action{align-self:center;white-space:nowrap}
+.ico-box{flex:none;display:grid;place-items:center;width:36px;height:36px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--moss)}
+.ico-box svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.sub-title{font:600 15px var(--body);display:flex;gap:8px;align-items:baseline}
+.sub-title span{font-weight:400;font-size:13px;color:var(--muted)}
+.card > .hint,.restore .hint{font-size:13px;color:var(--muted)}
+.form-cols{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+@media (max-width:640px){.form-cols{grid-template-columns:1fr}}
+.form-cols fieldset{border:0;margin:0;padding:0;display:grid;gap:12px;align-content:start}
+.form-cols legend{font:600 14px var(--body);padding:0 0 10px;color:var(--ink)}
+.form-foot{display:flex;gap:16px;align-items:flex-end;flex-wrap:wrap;padding-top:16px;margin-top:4px;border-top:1px solid var(--line)}
+.form-foot .field{width:200px}
+.form-cols .field input,.form-cols .field select,.form-foot .field input{height:42px;box-sizing:border-box}
+
+/* restore options, providers, badge setup */
+/* badge setup: pick a style on the left, see it full size in a site frame on the right */
+.style-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+@media (max-width:1100px){.style-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:760px){.style-grid{grid-template-columns:1fr}}
+.style-card{display:grid;grid-template-rows:auto auto;padding:0;text-align:left;background:var(--paper);border:1px solid var(--line);border-radius:14px;overflow:hidden;cursor:pointer;transition:border-color .15s,box-shadow .15s}
+.style-card:hover{border-color:color-mix(in srgb,var(--ink) 40%,var(--line))}
+.style-card[aria-pressed="true"]{border-color:var(--moss);box-shadow:0 0 0 1px var(--moss)}
+.style-stage{height:260px;display:grid;place-items:center;padding:20px;background:var(--bg);border-bottom:1px solid var(--line);overflow:hidden}
+.style-foot{display:flex;align-items:center;gap:12px;padding:14px 16px}
+.style-foot > span{display:grid;gap:2px;flex:1}
+.style-foot .dot{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--line);background:transparent;flex:none;display:grid;place-items:center}
+.style-card[aria-pressed="true"] .dot{border-color:var(--moss);background:var(--moss)}
+.style-card[aria-pressed="true"] .dot::after{content:"";width:6px;height:6px;border-radius:50%;background:var(--paper)}
+.style-card[aria-pressed="true"] .style-foot{background:var(--moss-soft)}
+.bp-svg{display:inline-block;line-height:0}
+.bp-svg svg{display:block}
+.bp-pill{display:inline-flex;align-items:center;gap:10px;white-space:nowrap;background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:7px 14px 7px 7px;font:13px var(--mono);font-variant-numeric:tabular-nums;box-shadow:var(--shadow)}
+.bp-pill b{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--ink);color:var(--paper);font-size:11px}
+.bp-pill em{font-style:normal;color:var(--moss);font-weight:600}
+.bp-label{display:grid;background:var(--paper);border:2px solid var(--ink);padding:12px 14px;width:280px;max-width:100%;font:13.5px/1.45 var(--body);text-align:left;box-shadow:var(--shadow);font-variant-numeric:tabular-nums}
+.bp-label strong{font:800 26px/1 var(--display);letter-spacing:-.02em;border-bottom:7px solid var(--ink);padding-bottom:5px;margin-bottom:4px}
+.bp-label > span{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid var(--ink);padding:4px 0}
+.bp-label > span:last-child{border-bottom:0;font-weight:600}
+.bp-label i,.bp-stub i{font-style:normal}
+.bp-label .ok{color:var(--moss)}
+.bp-stub{display:grid;background:var(--paper);border-left:3px dashed var(--line);padding:16px 18px;width:320px;max-width:100%;font:13px/1.6 var(--mono);color:var(--muted);text-align:left;box-shadow:var(--shadow);font-variant-numeric:tabular-nums}
+.bp-stub strong{font:800 18px var(--display);letter-spacing:-.01em;color:var(--ink);margin-bottom:6px}
+.bp-stub i{color:var(--ink)}
+.bp-stub .ok{color:var(--moss)}
+.card>*{min-width:0}
+#splitRange{width:100%;accent-color:var(--moss)}
+.restore{gap:20px}
+.options,.styles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media (max-width:640px){.options,.styles{grid-template-columns:1fr}}
+.opt{display:grid;gap:4px;text-align:left;background:var(--paper);border:1px solid var(--line);border-radius:14px;padding:14px 16px;cursor:pointer}
+.opt:hover{border-color:var(--ink)}
+.opt[aria-pressed="true"]{border-color:var(--moss);box-shadow:inset 0 0 0 1px var(--moss);background:var(--moss-soft)}
+.opt-name{font-weight:600}
+.opt-usd{font:600 22px var(--mono)}
+.opt-sub{font-size:12.5px;color:var(--muted)}
+.where{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+@media (max-width:640px){.where{grid-template-columns:1fr}}
+.where h3{font-size:16px}
+.providers{list-style:none;margin:8px 0 0;padding:0}
+.providers li{border-top:1px solid var(--line)}
+.providers a{display:grid;grid-template-columns:1fr auto;gap:0 12px;padding:10px 0;text-decoration:none;color:inherit}
+.providers strong{font-weight:600;font-size:14px}
+.providers span{font-size:12.5px;color:var(--muted)}
+.providers em{grid-row:1/3;grid-column:2;align-self:center;font-style:normal;color:var(--muted)}
+.providers a:hover strong{text-decoration:underline}
+.nudge{margin:0;padding:12px 14px;border-radius:10px;background:var(--moss-soft);font-size:14px;line-height:1.5}
+.nudge.warn{background:color-mix(in srgb,#B5462F 12%,var(--paper))}
+.soon{display:grid;gap:12px;padding:16px;border:1px dashed color-mix(in srgb,var(--moss) 45%,var(--line));border-radius:12px;background:var(--moss-soft);font-size:14px}
+.soon-copy{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.soon-tag{font:600 11px var(--mono);color:var(--paper);background:var(--moss);padding:3px 8px;border-radius:99px}
+.soon-row{display:flex;gap:8px;flex-wrap:wrap}
+.soon-row input{flex:1 1 200px;min-width:0}
+.soon-row input,.soon-row select{font:14px var(--body);color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:9px 12px}
+.soon-row input[aria-invalid="true"]{border-color:var(--stamp, #B5462F)}
+.soon .hint{margin:0}
+.soon .hint.err{color:var(--stamp, #B5462F)}
+.soon.done .soon-row{display:none}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.hist .right{display:inline-flex;gap:10px;align-items:center}
+.addproof{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}
+.addproof input{flex:1;min-width:200px;background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:13px}
+.addproof .btn{padding:8px 12px;font-size:13px}
+.hist .share{font-size:13px;margin-left:6px}
+.hist .shared-note{font-size:13px}
+.snip-row{display:flex;gap:10px;align-items:flex-start}
+.snippet{flex:1;min-width:0;margin:0;background:var(--ink);color:var(--bg);border-radius:12px;padding:14px 16px;font:12.5px/1.6 var(--mono);overflow-x:auto;white-space:pre}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="logo"><b>t.</b>tend</div>
+  <span class="auto" id="autoState"></span>
+</header>
+
+<div class="banner" id="svcBanner" hidden>
+  <p><strong>Bookmark this page.</strong> Keep Tend running in the background so <span class="mono">127.0.0.1:4317</span> always opens.</p>
+  <div class="banner-actions"><button class="link" type="button" id="svcLater">Not now</button><button class="btn small" type="button" id="svcOn">Keep Tend available</button></div>
+</div>
+
+<div class="banner" id="hookBanner" hidden>
+  <p><strong>Turn on automatic updates.</strong> Tend recalculates after every Claude Code turn. It adds one entry to your Claude Code settings and backs them up first.</p>
+  <div class="banner-actions"><button class="btn small" type="button" id="hookOn">Turn on</button></div>
+  <details><summary>See exactly what changes</summary><pre id="hookPreview"></pre></details>
+</div>
+
+<div class="app">
+  <nav class="list" id="list" aria-label="Projects"><p class="muted" style="padding:12px">Reading your Claude Code history…</p></nav>
+  <main class="main" id="main"></main>
+</div>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+const L_PER_GAL = 3.785;
+let S = null, selected = null, showAll = false;
+try { selected = localStorage.getItem('tend.project'); } catch {}
+
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+const tok = (n) => (n >= 1e9 ? `${(n / 1e9).toFixed(2)}B` : n >= 1e6 ? `${(n / 1e6).toFixed(1)}M` : `${Math.round(n / 1e3)}k`);
+const kg = (n) => (n < 1 ? `${Math.round(n * 1000)} g` : `${n < 10 ? n.toFixed(1) : Math.round(n)} kg`);
+const L = (n) => `${Math.round(n).toLocaleString('en-US')} L`;
+const usd = (n) => `$${n.toFixed(2)}`;
+const date = (iso) => new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+// Shown in the copy-paste snippet for the user's own site; this page never loads it.
+const BADGE_SCRIPT = 'https://unpkg.com/gettend@1/badge/tend-badge.js';
+// Where the opt-in "Add to the shared total" button sends a purchase's amounts and proof links.
+const SHARED_TOTAL_URL = 'https://gettend.eco/api/total';
+const WAITLIST_URL = ''; // the waitlist form endpoint; see waitlist/apps-script.gs
+const toast = (msg) => { const t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => (t.hidden = true), 2600); };
+
+async function api(name, body) {
+  const res = await fetch(`/api/${name}`, body ? { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) } : {});
+  const json = await res.json();
+  if (!res.ok || json.error) throw new Error(json.error || 'Something went wrong.');
+  return json;
+}
+
+async function load() {
+  S = await api('state');
+  if (!S.projects.find((p) => p.path === selected)) selected = (S.projects.find((p) => p.link) ?? S.projects[0])?.path ?? null;
+  render();
+}
+
+function status(p) {
+  if (!p.link) return ['off', 'Not tracked'];
+  if (p.quote.settled && showsRestored(p.restored)) return ['ok', p.restored.multiplier >= 2 ? `Funded ${p.restored.multiplier}×` : 'Funded'];
+  if (p.quote.settled) return ['due', 'Needs proof'];
+  return ['due', kg(p.quote.open.co2Kg)];
+}
+
+function render() {
+  $('autoState').innerHTML = S.hook ? '<span class="dot"></span>Updating after every Claude Code turn' : '<span class="dot off"></span>Automatic updates are off';
+  $('hookBanner').hidden = S.hook;
+  let svcDismissed = false; try { svcDismissed = localStorage.getItem('tend.svcDismissed') === '1'; } catch {}
+  $('svcBanner').hidden = !S.service?.supported || S.service.on || svcDismissed;
+  if (S.service?.on) $('autoState').insertAdjacentHTML('beforeend', ` · Always available at <span class="mono">127.0.0.1:4317</span> <button class="link" type="button" id="svcOff">Turn off</button>`);
+  if (S.hookPreview) $('hookPreview').textContent = `Adds to "hooks" in ${S.hookPreview.settings}:\n\n${JSON.stringify(S.hookPreview.entries, null, 2)}\n\nBacks up your settings to ${S.hookPreview.backup} first, and copies Tend to ${S.hookPreview.appDir}.`;
+
+  const tracked = S.projects.filter((p) => p.link);
+  const others = S.projects.filter((p) => !p.link);
+  const visibleOthers = showAll ? others : others.slice(0, 5);
+  const item = (p) => {
+    const [cls, label] = status(p);
+    return `<button class="proj" type="button" data-p="${esc(p.path)}" aria-current="${p.path === selected}">
+      <span class="n">${esc(p.name)}</span><span class="chip ${cls}">${esc(label)}</span>
+      <span class="s">${tok(p.tokens)} tokens · ${kg(p.footprint.co2Kg.mid)}</span></button>`;
+  };
+  $('list').innerHTML =
+    (tracked.length ? `<h2>Tracked</h2>${tracked.map(item).join('')}` : '') +
+    (others.length ? `<h2>${tracked.length ? 'Other projects' : 'Your projects'}</h2>${visibleOthers.map(item).join('')}` : '') +
+    (others.length > 5 ? `<button class="more" type="button" id="more">${showAll ? 'Show fewer' : `Show all ${others.length}`}</button>` : '');
+  $('list').querySelectorAll('.proj').forEach((b) => b.addEventListener('click', () => {
+    selected = b.dataset.p; try { localStorage.setItem('tend.project', selected); } catch {} render();
+  }));
+  $('more')?.addEventListener('click', () => { showAll = !showAll; render(); });
+
+  const p = S.projects.find((x) => x.path === selected);
+  $('main').innerHTML = p ? (p.link ? trackedView(p) : untrackedView(p)) : '<div class="empty">No Claude Code usage found yet. Build something, then come back.</div>';
+  wire(p);
+}
+
+
+// Monday of an ISO week like "2026-W43".
+function weekStart(w) {
+  const [y, n] = w.split('-W').map(Number);
+  const jan4 = new Date(y, 0, 4);
+  const mon = new Date(y, 0, 4 - ((jan4.getDay() + 6) % 7) + (n - 1) * 7);
+  return mon;
+}
+const md = (d) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+const modelLabel = (id) => { const m = /claude-(\w+)/.exec(id); return m ? m[1][0].toUpperCase() + m[1].slice(1) : id; };
+
+// Weekly carbon: headline numbers, then compact bars (this week in full color) with the 12-week average marked.
+function usageCard(p) {
+  const weeks = p.weekly, n = weeks.length, now = weeks.at(-1)?.co2Kg ?? 0;
+  const sum = weeks.reduce((a, w) => a + w.co2Kg, 0), active = weeks.filter((w) => w.co2Kg > 0), avg = active.length ? sum / active.length : 0;
+  const max = Math.max(...weeks.map((w) => w.co2Kg), avg, 0.001) * 1.08;
+  const delta = avg ? Math.round((now / avg - 1) * 100) : 0;
+  const bars = weeks.map((w, i) => {
+    const start = weekStart(w.week), last = i === n - 1;
+    const label = `${last ? 'This week' : 'Week of ' + md(start)} · ${w.co2Kg ? kg(w.co2Kg) + ' CO₂e · ' + tok(w.tokens) + ' tokens' : 'no usage'}`;
+    return `<div class="wk${last ? ' now' : ''}${w.co2Kg ? '' : ' zero'}" tabindex="0" role="img" aria-label="${esc(label)}" data-tip="${esc(label)}" style="--i:${i}"><i style="--h:${(w.co2Kg / max * 100).toFixed(1)}%"></i></div>`;
+  }).join('');
+  const xl = weeks.map((w, i) => `<span>${i === n - 1 ? 'Now' : i % 3 === 2 ? md(weekStart(w.week)) : ''}</span>`).join('');
+  const total = p.models.reduce((a, m) => a + m.tokens, 0) || 1;
+  const models = p.models.slice(0, 5).map((m) => {
+    const share = m.tokens / total;
+    return `<div class="model"><span>${esc(modelLabel(m.model))}</span><span class="track"><i style="width:${(share * 100).toFixed(1)}%"></i></span><span class="num">${Math.round(share * 100)}% · ${tok(m.tokens)} · ${kg(m.co2Kg)}</span></div>`;
+  }).join('');
+  const rows = weeks.map((w) => `<tr><td>${md(weekStart(w.week))}</td><td class="n">${tok(w.tokens)}</td><td class="n">${kg(w.co2Kg)}</td></tr>`).join('');
+  return `<section class="card usage" aria-label="Usage">
+    ${cardHead('chart', 'Weekly carbon', 'Last 12 weeks · middle estimate')}
+    <div class="wk-stats">
+      <div class="wk-stat lead"><small>This week</small><b>${kg(now)}<em>CO₂e</em></b>${avg ? `<span class="wk-delta">${delta >= 0 ? '+' : '−'}${Math.abs(delta)}% vs. average</span>` : ''}</div>
+      <div class="wk-stat"><small>Weekly average</small><b>${kg(avg)}</b></div>
+      <div class="wk-stat"><small>12-week total</small><b>${kg(sum)}</b></div>
+    </div>
+    <div class="chart" style="--n:${n}" aria-label="Estimated carbon per week, last ${n} weeks">
+      <div class="plot">${avg ? `<div class="avg" style="bottom:${(avg / max * 100).toFixed(1)}%"><span>avg ${kg(avg)}</span></div>` : ''}${bars}</div>
+      <div class="xlab" aria-hidden="true">${xl}</div>
+      <div class="tip" hidden></div>
+    </div>
+    <details><summary class="hint">View as table</summary><table><thead><tr><th>Week of</th><th class="n">Tokens</th><th class="n">CO₂e</th></tr></thead><tbody>${rows}</tbody></table></details>
+    <h3 class="sub-title">By model <span>share of tokens</span></h3>
+    <div class="models">${models || '<p class="muted">No model data yet.</p>'}</div>
+  </section>`;
+}
+
+function wireUsage() {
+  const chart = document.querySelector('.usage .chart');
+  if (!chart) return;
+  const tip = chart.querySelector('.tip');
+  const show = (g) => {
+    tip.textContent = g.dataset.tip; tip.hidden = false;
+    // Keep the tooltip inside the chart near the edges.
+    const box = chart.getBoundingClientRect(), r = g.getBoundingClientRect(), bar = g.firstElementChild.getBoundingClientRect(), half = tip.offsetWidth / 2;
+    tip.style.left = `${Math.min(Math.max(r.left - box.left + r.width / 2, half), box.width - half)}px`; tip.style.top = `${bar.top - box.top}px`;
+  };
+  chart.querySelectorAll('.wk').forEach((g) => {
+    g.addEventListener('mouseenter', () => show(g));
+    g.addEventListener('focus', () => show(g));
+    g.addEventListener('mouseleave', () => (tip.hidden = true));
+    g.addEventListener('blur', () => (tip.hidden = true));
+  });
+}
+
+function receipt(p, title, meta, figs, stamp) {
+  return `<section class="receipt" aria-label="Footprint">
+    <h1 class="pname">${esc(p.name)}</h1>
+    <h2 class="status">${title}</h2>
+    <p class="meta">${meta}</p>
+    <div class="figs">${figs.map(([v, k, r]) => `<div class="fig"><span class="v">${v}</span><span class="k">${k}</span>${r ? `<span class="r">${r}</span>` : ''}</div>`).join('')}</div>
+    ${stamp ? `<span class="stamp${stamp.pop ? ' pop' : ''}">${stamp.text}</span>` : ''}
+  </section>`;
+}
+
+function untrackedView(p) {
+  const f = p.footprint;
+  return receipt(p, `${tok(p.tokens)} tokens so far`, `${p.sessions} sessions · last active ${date(p.lastActive)} · ${esc(p.path)}`, [
+      [kg(f.co2Kg.mid), 'CO₂e', `range ${kg(f.co2Kg.low)}–${kg(f.co2Kg.high)}`],
+      [L(f.waterL.mid), 'water', 'cooling and power generation'],
+      [usd(f.restoreUsd), 'to restore', 'estimated'],
+    ]) + usageCard(p) + `
+    <section class="card">
+      ${cardHead('track', 'Track this project', 'Tend keeps a small footprint file here for your site’s badge. Nothing from your prompts or code goes in it.')}
+      <div class="field"><label for="outPath">Footprint file</label><input id="outPath" value="public/footprint.json"><span class="hint">Relative to the project folder. Most sites serve files from public/.</span></div>
+      <div><button class="btn" type="button" id="track">Start tracking</button></div>
+    </section>`;
+}
+
+
+const PROVIDERS = {
+  carbon: [
+    ['Remove Carbon Today', 'https://www.removecarbontoday.com/', 'Biochar from 1 kg, with a public registry record'],
+    ['Carbonmark', 'https://www.carbonmark.com/buy-carbon-credits', 'Marketplace of removal credits, from 1 kg'],
+    ['Climeworks', 'https://climeworks.com/actnow', 'Direct air capture, one-time or monthly'],
+  ],
+  water: [
+    ['ClimeCo', 'https://shop.climeco.com/product/water-restoration-certificate/', 'Water Restoration Certificates, bought online'],
+    ['Bonneville Environmental Foundation', 'https://www.b-e-f.org/', 'More river basins, by request'],
+    ['The Freshwater Trust', 'https://thefreshwatertrust.org/donate', 'River and watershed restoration with measured results'],
+  ],
+};
+const PROOF = { checked: ['ok', 'Proof checked'], unrecognized: ['due', 'Link not recognized'], missing: ['due', 'Needs proof'] };
+const BADGES = [
+  ['pill', 'Pill', 'For a footer'],
+  ['label', 'Label', 'For a case study'],
+  ['stub', 'Stub', 'For project credits'],
+  ['readme', 'README', 'For a GitHub repo'],
+];
+
+// What to buy at a multiplier: removal in whole kg, water in whole 1,000-gallon certificates.
+function plan(q, m) {
+  const kgs = Math.ceil(q.open.co2Kg * m), certs = Math.max(1, Math.ceil((q.open.waterL * m) / L_PER_GAL / 1000));
+  const c = kgs * S.prices.usdPerKg, w = certs * S.prices.usdPerCertificate;
+  return { kgs, certs, carbonUsd: c, waterUsd: w, usd: c + w };
+}
+
+// A static copy of what each badge style shows for this project, matching badge/tend-badge.js.
+const ICONS = {
+  ret: '<path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4.5h4.5"/><path d="M12 8.5v7"/><path d="M9.5 13l2.5 2.5 2.5-2.5"/>',
+  pen: '<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>',
+  chart: '<path d="M5 20v-8"/><path d="M11 20V5"/><path d="M17 20v-5"/><path d="M3 20h18"/>',
+  receipt: '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6"/><path d="M9 12h6"/>',
+  code: '<path d="M8 8l-4 4 4 4"/><path d="M16 8l4 4-4 4"/><path d="M13.5 5l-3 14"/>',
+  track: '<rect x="3" y="4.5" width="18" height="15" rx="2"/><path d="M7 10l3 2.5L7 15"/><path d="M12.5 15H17"/>',
+};
+// One header for every card: a small line icon, the title, and one muted line under it.
+function cardHead(icon, title, sub, extra = '') {
+  return `<div class="card-head"><span class="ico-box" aria-hidden="true"><svg viewBox="0 0 24 24">${ICONS[icon]}</svg></span><div><h2>${title}</h2>${sub ? `<p>${sub}</p>` : ''}</div>${extra}</div>`;
+}
+
+// Mirrors showsRestored in lib/store.mjs: the badge's check holds while current or within the grace window.
+const showsRestored = (r) => !!r && (r.status === 'current' || r.status === 'grace');
+
+function badgePreview(v, p) {
+  // The README badge is the SVG Tend writes beside footprint.json; the page gets it from the local server.
+  if (v === 'readme') return p.svg ? `<span class="bp-svg">${p.svg}</span>` : '<span class="muted">Appears after the next scan.</span>';
+  const f = p.footprint, r = showsRestored(p.restored) ? p.restored : null;
+  const range = `${kg(f.co2Kg.low)}–${kg(f.co2Kg.high)}`;
+  // Same hover text as the real badge: footprint, then the restored date.
+  const tip = esc(`${tok(p.tokens)} tokens, about ${kg(f.co2Kg.mid)} CO₂e${r ? `. Restored through ${md(new Date(r.settledThrough))}, with proof` : ''}`);
+  if (v === 'pill') return `<span class="bp-pill" title="${tip}"><b>t.</b><span>${tok(p.tokens)} tok · ${kg(f.co2Kg.mid)}</span>${r ? '<em>✓ restored</em>' : ''}</span>`;
+  if (v === 'label') return `<span class="bp-label" title="${tip}"><strong>Footprint facts</strong>
+    <span><i>Tokens</i><i>${tok(p.tokens)}</i></span>
+    <span><i>Energy</i><i>${f.kwh.mid < 1 ? Math.round(f.kwh.mid * 1000) + ' Wh' : f.kwh.mid.toFixed(1) + ' kWh'}</i></span>
+    <span><i>Carbon</i><i>${kg(f.co2Kg.mid)}</i></span>
+    <span><i>Water</i><i>${L(f.waterL.mid)}</i></span>
+    <span><i>Estimate range</i><i>${range}</i></span>
+    ${r ? `<span class="ok"><i>CO₂ removed</i><i>${kg(r.co2Kg)} ✓</i></span><span class="ok"><i>Water restored</i><i>${L(r.waterL)} ✓</i></span>` : ''}
+    <span><i>Tend's method version</i><i>${esc(S.methodVersion ?? '')}</i></span></span>`;
+  const total = p.models.reduce((a, m) => a + m.tokens, 0) || 1;
+  const mix = p.models.slice(0, 2).map((m) => `${Math.round((m.tokens / total) * 100)}% ${esc(modelLabel(m.model))}`).join(' · ');
+  const month = new Date(p.lastActive).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  return `<span class="bp-stub" title="${tip}"><strong>Made with ${tok(p.tokens)} tokens</strong>
+    <span>Claude Code · ${month}</span>${mix ? `<span>Models: ${mix}</span>` : ''}
+    <span>Carbon: <i>${kg(f.co2Kg.mid)}</i> CO₂e</span><span>Water: <i>${L(f.waterL.mid)}</i></span>
+    <span>Range: <i>${range}</i></span>${r ? `<span class="ok">Funded: ${kg(r.co2Kg)} CO₂ removal · ${L(r.waterL)} water ✓</span>` : ''}</span>`;
+}
+
+// Once usage grows past a purchase, say what happens to the badge and when.
+function badgeNudge(p) {
+  const r = p.restored, q = p.quote;
+  if (!r || !p.link || q.settled) return '';
+  const mc = r.methodChange;
+  const why = mc ? `Tend's method changed from ${esc(mc.from)} to ${esc(mc.to)} on ${date(mc.released)}, which re-estimated your footprint. ` : '';
+  if (r.status === 'grace') return `<p class="nudge">${why}Your badge says “restored through ${date(r.settledThrough)}” until ${date(r.graceUntil)}. After that it shows the share funded. Restore the ${kg(q.open.co2Kg)} since then to keep the check.</p>`;
+  if (r.status === 'partial') return `<p class="nudge warn">${why}Your badge now shows ${r.coveredPercent}% restored, through ${date(r.settledThrough)}. Restore the ${kg(q.open.co2Kg)} since then to bring it back to a check.</p>`;
+  return '';
+}
+
+function trackedView(p, justSettled) {
+  const q = p.quote, f = p.footprint, wk = p.weekly.at(-1);
+  const checked = p.settlements.filter((e) => e.proof === 'checked').length;
+  let head;
+  if (q.settled && showsRestored(p.restored)) {
+    head = receipt(p, p.restored.multiplier >= 2 ? `Funded ${p.restored.multiplier}× my footprint` : 'Funded my footprint', `Covered through ${date(p.restored.settledThrough)} · ${p.restored.settlements} purchase${p.restored.settlements > 1 ? 's' : ''} with proof · ${usd(p.restored.usd)}`, [
+      [kg(p.restored.co2Kg), 'CO₂ removal funded', esc(p.restored.carbon)],
+      [L(p.restored.waterL), 'water restoration funded', esc(p.restored.watershed)],
+      [tok(p.tokens), 'tokens tracked', `${kg(f.co2Kg.mid)} CO₂e used`],
+    ], { text: 'FUNDED', pop: justSettled });
+  } else if (q.settled) {
+    head = receipt(p, 'Recorded. Add proof to finish.', `Your purchase covers your usage through ${date(q.since)}. Your badge says “funded” once a certificate or receipt is checked.`, [
+      [kg(f.co2Kg.mid), 'CO₂e used', `range ${kg(f.co2Kg.low)}–${kg(f.co2Kg.high)}`],
+      [L(f.waterL.mid), 'water used', 'cooling and power generation'],
+      [String(p.settlements.length - checked), 'purchases need proof', 'add a link below'],
+    ]);
+  } else {
+    head = receipt(p, `This week you used ${tok(wk.tokens)} tokens.`, `That's about ${kg(wk.co2Kg)} CO₂e and ${L(wk.waterL)} of water, middle estimate · writes ${esc(p.link.out)}`, [
+      [kg(wk.co2Kg), 'CO₂e this week', `range ${kg(wk.co2Kg * 0.4)}–${kg(wk.co2Kg * 2.5)}`],
+      [L(wk.waterL), 'water this week', 'cooling and power generation'],
+      [kg(q.open.co2Kg), 'not yet restored', `since ${date(q.since)}`],
+    ]);
+  }
+
+  const options = [1, 3, 10].map((m) => {
+    const pl = plan(q, m);
+    return `<button class="opt" type="button" data-m="${m}" aria-pressed="${m === q.multiplier}">
+      <span class="opt-name">${m === 1 ? 'Middle estimate' : `${m}×`}</span><span class="opt-usd">${usd(pl.usd)}</span>
+      <span class="opt-sub">${pl.kgs} kg removal · ${pl.certs} water certificate${pl.certs > 1 ? 's' : ''}</span></button>`;
+  }).join('');
+  const provs = (k) => PROVIDERS[k].map(([n, u, d]) => `<li><a href="${u}" target="_blank" rel="noopener"><strong>${n}</strong><span>${d}</span><em>↗</em></a></li>`).join('');
+
+  const restoreCard = q.settled ? '' : `
+    <section class="card restore">
+      ${cardHead('ret', 'Restore what you used', `Since ${date(q.since)}: ${kg(q.open.co2Kg)} CO₂e and ${L(q.open.waterL)} of water. Pick an amount, then buy directly from a provider.`)}
+      ${badgeNudge(p)}
+      <div class="options" role="group" aria-label="How much to restore">${options}</div>
+      <div class="field">
+        <div class="row"><span><b>Carbon removal</b> <span class="mono" id="cUsd"></span> <span class="muted" id="cAmt"></span></span><span><b>Water restoration</b> <span class="mono" id="wUsd"></span> <span class="muted" id="wAmt"></span></span></div>
+        <input type="range" id="splitRange" min="10" max="95" aria-label="Split between carbon removal and water restoration">
+        <span class="hint">Slide to split the amount between carbon removal and water restoration.</span>
+      </div>
+      <div class="where">
+        <div><h3>Buy carbon removal</h3><ul class="providers">${provs('carbon')}</ul></div>
+        <div><h3>Buy water restoration</h3><ul class="providers">${provs('water')}</ul></div>
+      </div>
+      <form class="soon" id="wlForm" novalidate>
+        <div class="soon-copy"><span class="soon-tag">Soon</span><b>Restore in one click.</b> Tend buys the credits and attaches the certificate for you.</div>
+        <div class="soon-row">
+          <label class="sr-only" for="wlEmail">Email</label>
+          <input type="email" id="wlEmail" name="email" autocomplete="email" placeholder="you@studio.com" required>
+          <select id="wlCadence" name="cadence" aria-label="How you'd restore"><option value="weekly">Automatically each week</option><option value="manual">When I choose</option></select>
+          <button class="btn dark" type="submit">Join the waitlist</button>
+        </div>
+        <p class="hint" id="wlMsg" role="status">Sends only your email and this choice to Tend's waitlist.</p>
+      </form>
+    </section>
+    <section class="card">
+      ${cardHead('pen', 'Record what you bought', 'Add the certificate or receipt link. Your badge says “funded” once Tend recognizes the provider.')}
+      <form id="settleForm" novalidate>
+        <div class="form-cols">
+          <fieldset><legend>Carbon removal</legend>
+            <div class="field"><label for="co2Kg">Amount</label><div class="unit"><input id="co2Kg" inputmode="decimal"><span>kg</span></div><span class="err" data-err="co2Kg"></span></div>
+            <div class="field"><label for="carbon">Method</label><select id="carbon"><option>biochar</option><option>enhanced rock weathering</option><option>direct air capture</option><option>other carbon removal</option></select></div>
+            <div class="field"><label for="carbonCert">Certificate or receipt link</label><input id="carbonCert" type="url" placeholder="https://"><span class="err" data-err="carbonCert"></span></div>
+          </fieldset>
+          <fieldset><legend>Water restoration</legend>
+            <div class="field"><label for="waterGal">Amount</label><div class="unit"><input id="waterGal" inputmode="decimal"><span>gal</span></div><span class="err" data-err="water"></span></div>
+            <div class="field"><label for="basin">River basin</label><input id="basin" list="basins" value="Colorado River basin"><datalist id="basins"><option>Colorado River basin</option><option>Columbia River basin</option><option>Rio Grande basin</option><option>Great Lakes watersheds</option></datalist></div>
+            <div class="field"><label for="waterCert">Certificate or receipt link</label><input id="waterCert" type="url" placeholder="https://"><span class="err" data-err="waterCert"></span></div>
+          </fieldset>
+        </div>
+        <div class="form-foot">
+          <div class="field"><label for="usd">Total paid</label><div class="unit"><input id="usd" inputmode="decimal"><span>USD</span></div><span class="err" data-err="usd"></span></div>
+          <button class="btn" type="submit" id="recordBtn">Record purchase</button>
+        </div>
+        <span class="err" data-err="form"></span>
+      </form>
+    </section>`;
+
+  const hist = p.settlements.length ? `
+    <section class="card">
+      ${cardHead('receipt', 'Purchases', `${checked} of ${p.settlements.length} with checked proof`, '<button class="link danger head-action" type="button" id="undo">Remove the last one</button>')}
+      <div class="hist">${p.settlements.map((e, i) => [e, i]).reverse().map(([e, i]) => {
+        const [cls, label] = PROOF[e.proof];
+        return `<div>
+        <span class="mono muted">${date(e.date)}</span>
+        <span>${kg(e.co2Kg)} ${esc(e.carbon)} · ${L(e.waterL)} ${esc(e.basin)}${e.carbonCert ? ` · <a href="${esc(e.carbonCert)}" target="_blank" rel="noopener">carbon proof</a>` : ''}${e.waterCert ? ` · <a href="${esc(e.waterCert)}" target="_blank" rel="noopener">water proof</a>` : ''}
+          ${e.proof === 'checked' ? (e.shared ? '<span class="muted shared-note">· in the shared total</span>' : `<button class="link share" type="button" data-i="${i}">Add to the shared total</button>`) : `<form class="addproof" data-i="${i}"><input type="url" placeholder="Certificate or receipt link, https://" aria-label="Proof link"><button class="btn ghost" type="submit">Add proof</button></form>`}</span>
+        <span class="right"><span class="chip ${cls}">${label}</span><span class="mono">${usd(e.usd)}</span></span></div>`;
+      }).join('')}</div>
+    </section>` : '';
+
+  let style = 'pill'; try { style = localStorage.getItem('tend.badge') || 'pill'; } catch {}
+  const badgeCard = `
+    <section class="card badge-setup">
+      ${cardHead('code', 'Add your record to a site', `Pick a style, then paste the code into your site once. Tend keeps <span class="mono">${esc(p.link.out.split('/').slice(-2).join('/'))}</span> up to date.`)}
+      <div class="style-grid" role="group" aria-label="Badge style">${BADGES.map(([v, n, d]) => `<button class="style-card" type="button" data-style="${v}" aria-pressed="${v === style}">
+        <span class="style-stage" aria-hidden="true">${badgePreview(v, p)}</span>
+        <span class="style-foot"><span><span class="opt-name">${n}</span><span class="opt-sub">${d}</span></span><i class="dot"></i></span>
+      </button>`).join('')}</div>
+      <div class="snip-row"><pre class="snippet" id="snippet"></pre><button class="btn dark" type="button" id="copySnip">Copy</button></div>
+      <p class="hint">Shows your footprint right away. Says “funded” only for purchases with checked proof${p.settlements.length ? ` (${checked} of ${p.settlements.length} so far)` : ''}.</p>
+    </section>`;
+
+  const stop = `<p style="padding:0 4px"><button class="link" type="button" id="untrack">Stop tracking this project</button></p>`;
+  return head + restoreCard + usageCard(p) + hist + badgeCard + stop;
+}
+
+function wire(p) {
+  if (!p) return;
+  wireUsage();
+  $('track')?.addEventListener('click', async () => {
+    try { const r = await api('track', { project: p.path, multiplier: 1, out: $('outPath').value.trim() }); toast(`Tracking. Wrote ${r.written.at(-1) ?? 'the footprint file'}`); await load(); }
+    catch (e) { toast(e.message); }
+  });
+  $('untrack')?.addEventListener('click', async (ev) => {
+    const b = ev.currentTarget;
+    if (!b.dataset.armed) { b.dataset.armed = '1'; b.textContent = 'Click again to stop tracking. Your footprint file stays where it is.'; setTimeout(() => { delete b.dataset.armed; b.textContent = 'Stop tracking this project'; }, 4000); return; }
+    await api('untrack', { project: p.path }); toast('Stopped tracking.'); await load();
+  });
+  $('undo')?.addEventListener('click', async (ev) => {
+    const b = ev.currentTarget;
+    if (!b.dataset.armed) { b.dataset.armed = '1'; b.textContent = 'Click again to remove it'; setTimeout(() => { delete b.dataset.armed; b.textContent = 'Remove the last one'; }, 4000); return; }
+    await api('undo', { project: p.path }); toast('Removed the last purchase.'); await load();
+  });
+
+  // Proof added after the fact.
+  document.querySelectorAll('.addproof').forEach((f) => f.addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const url = f.querySelector('input').value.trim();
+    try {
+      const r = await api('proof', { project: p.path, index: f.dataset.i, carbonCert: url });
+      if (r.problems) return toast(r.problems[0].message);
+      toast(r.status === 'checked' ? 'Proof checked. Your badge now says funded.' : 'Saved, but Tend doesn’t recognize that provider yet, so the badge won’t say funded.');
+      await load();
+    } catch (e) { toast(e.message); }
+  }));
+
+  // Opt-in: add a purchase with proof to the shared total on gettend.eco. The only thing Tend's page ever sends
+  // on its own behalf, and only on this click: the two amounts and the proof links. No name, project or usage.
+  document.querySelectorAll('.share').forEach((b) => b.addEventListener('click', async () => {
+    const e = p.settlements[Number(b.dataset.i)];
+    if (!b.dataset.armed) {
+      b.dataset.armed = '1';
+      b.textContent = `Send ${kg(e.co2Kg)}, ${L(e.waterL)} and the proof link to gettend.eco? Click again`;
+      setTimeout(() => { delete b.dataset.armed; b.textContent = 'Add to the shared total'; }, 6000);
+      return;
+    }
+    b.disabled = true;
+    try {
+      const res = await fetch(SHARED_TOTAL_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ co2Kg: e.co2Kg, waterL: e.waterL, proof: [e.carbonCert, e.waterCert, e.receipt].filter(Boolean) }) });
+      const r = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(r.error || 'The shared total is unavailable right now.');
+      await api('shared', { project: p.path, index: b.dataset.i });
+      toast(r.added ? 'Added. Thank you for counting it.' : 'This purchase was already counted.');
+      await load();
+    } catch (err) { b.disabled = false; toast(err.message); }
+  }));
+
+  // One-click restore waitlist. Set WAITLIST_URL to the waitlist endpoint before release; nothing is sent until someone submits.
+  const wl = $('wlForm');
+  if (wl) {
+    let joined = false; try { joined = localStorage.getItem('tend.waitlist') === '1'; } catch {}
+    if (joined) { wl.classList.add('done'); $('wlMsg').textContent = "You're on the waitlist."; }
+    wl.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = $('wlEmail'), msg = $('wlMsg'), ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim());
+      email.setAttribute('aria-invalid', !ok); msg.classList.toggle('err', !ok);
+      if (!ok) { msg.textContent = 'Enter an email address like name@example.com.'; email.focus(); return; }
+      try {
+        if (WAITLIST_URL) await fetch(WAITLIST_URL, { method: 'POST', mode: 'no-cors', body: new URLSearchParams({ email: email.value.trim(), cadence: $('wlCadence').value, source: 'dashboard' }) });
+        wl.classList.add('done'); msg.textContent = "You're on the waitlist. We'll email you when one-click restore opens.";
+        try { localStorage.setItem('tend.waitlist', '1'); } catch {}
+      } catch { msg.classList.add('err'); msg.textContent = "That didn't go through. Check your connection and try again."; }
+    });
+  }
+
+  // Badge style and code.
+  const snippet = $('snippet');
+  if (snippet) {
+    const show = (v) => {
+      // README: Markdown pointing at the SVG's path inside the repo. Others: the script badge.
+      const inRepo = p.link.out.startsWith(p.path + '/') ? p.link.out.slice(p.path.length + 1) : p.link.out.split('/').pop();
+      snippet.textContent = v === 'readme'
+        ? `[![Tend footprint](${inRepo.replace(/(\.json)?$/i, '.svg')})](https://gettend.eco)`
+        : `<script type="module" src="${BADGE_SCRIPT}"><\/script>\n<tend-badge src="/${p.link.out.includes('/public/') ? p.link.out.split('/public/').pop() : p.link.out.split('/').pop()}" variant="${v}"></tend-badge>`;
+      document.querySelectorAll('[data-style]').forEach((b) => b.setAttribute('aria-pressed', b.dataset.style === v));
+      try { localStorage.setItem('tend.badge', v); } catch {}
+    };
+    document.querySelectorAll('[data-style]').forEach((b) => b.addEventListener('click', () => show(b.dataset.style)));
+    // Shrink each preview to fit its tile both ways, so all three stay whole and comparable at any width.
+    const fit = () => document.querySelectorAll('.style-stage').forEach((st) => {
+      const el = st.firstElementChild; if (!el) return;
+      el.style.zoom = 1; el.style.zoom = Math.min(1, (st.clientWidth - 32) / el.offsetWidth, (st.clientHeight - 32) / el.offsetHeight);
+    });
+    fit(); addEventListener('resize', fit);
+    show(document.querySelector('[data-style][aria-pressed="true"]')?.dataset.style ?? 'pill');
+    $('copySnip').addEventListener('click', () => navigator.clipboard?.writeText(snippet.textContent).then(() => toast('Copied. Paste it into your site once.'), () => toast('Select the code and copy it.')));
+  }
+
+  const form = $('settleForm');
+  if (!form) return;
+  const q = p.quote;
+  // The chosen option sets the amount; the slider splits it between carbon and water and fills in the form.
+  document.querySelectorAll('.opt[data-m]').forEach((b) => b.addEventListener('click', async () => {
+    await api('track', { project: p.path, multiplier: Number(b.dataset.m), out: p.link.out });
+    await load();
+  }));
+  const pl = plan(q, q.multiplier), split = $('splitRange');
+  split.value = Math.round((pl.carbonUsd / pl.usd) * 100);
+  const applySplit = () => {
+    const share = split.value / 100, cUsd = pl.usd * share, wUsd = pl.usd - cUsd;
+    const kgs = Math.max(1, Math.floor(cUsd / S.prices.usdPerKg)), certs = Math.max(1, Math.floor(wUsd / S.prices.usdPerCertificate));
+    $('cUsd').textContent = usd(cUsd); $('cAmt').textContent = `≈ ${kgs} kg`;
+    $('wUsd').textContent = usd(wUsd); $('wAmt').textContent = `≈ ${certs} certificate${certs > 1 ? 's' : ''}`;
+    $('co2Kg').value = kgs; $('waterGal').value = certs * 1000; $('usd').placeholder = (kgs * S.prices.usdPerKg + certs * S.prices.usdPerCertificate).toFixed(2);
+  };
+  split.addEventListener('input', applySplit);
+  applySplit();
+
+  form.addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    form.querySelectorAll('[data-err]').forEach((e) => (e.textContent = ''));
+    form.querySelectorAll('[aria-invalid]').forEach((e) => e.removeAttribute('aria-invalid'));
+    const body = { project: p.path, ...Object.fromEntries(['co2Kg', 'carbon', 'carbonCert', 'waterGal', 'basin', 'waterCert', 'usd'].map((k) => [k, $(k).value.trim()])) };
+    $('recordBtn').disabled = true;
+    $('recordBtn').textContent = 'Saving…';
+    try {
+      const r = await api('settle', body);
+      if (r.problems) {
+        const ids = { co2Kg: 'co2Kg', water: 'waterGal', usd: 'usd', carbonCert: 'carbonCert', waterCert: 'waterCert' };
+        for (const x of r.problems) {
+          form.querySelector(`[data-err="${x.field ?? 'form'}"]`).textContent = x.message;
+          if (ids[x.field]) $(ids[x.field]).setAttribute('aria-invalid', 'true');
+        }
+        (form.querySelector('[aria-invalid="true"]') ?? $('recordBtn')).focus();
+        return;
+      }
+      S = await api('state');
+      render();
+      // Redraw once more with the stamp animating in.
+      const np = S.projects.find((x) => x.path === p.path);
+      $('main').innerHTML = trackedView(np, true);
+      wire(np);
+      toast(r.restored ? 'Recorded with proof. Your badge now says funded.' : 'Recorded. Add a certificate or receipt link so your badge can say funded.');
+    } catch (e) {
+      form.querySelector('[data-err="form"]').textContent = e.message;
+    } finally {
+      if ($('recordBtn')) { $('recordBtn').disabled = false; $('recordBtn').textContent = 'Record purchase'; }
+    }
+  });
+}
+
+$('svcOn').addEventListener('click', async () => {
+  try { await api('service', { on: true }); toast('Tend stays available now. Bookmark http://127.0.0.1:4317'); await load(); }
+  catch (e) { toast(e.message); }
+});
+$('svcLater').addEventListener('click', () => { try { localStorage.setItem('tend.svcDismissed', '1'); } catch {} $('svcBanner').hidden = true; });
+// Turning it off can stop the very server showing this page, so the request may not come back.
+document.addEventListener('click', async (e) => {
+  if (e.target.id !== 'svcOff') return;
+  const b = e.target;
+  if (!b.dataset.armed) { b.dataset.armed = '1'; b.textContent = 'Click again to turn off'; setTimeout(() => { delete b.dataset.armed; b.textContent = 'Turn off'; }, 4000); return; }
+  await api('service', { on: false }).catch(() => {});
+  toast('Tend no longer runs in the background. Run npx gettend to open it again.');
+  load().catch(() => {});
+});
+
+$('hookOn').addEventListener('click', async () => {
+  try { await api('hook', { install: true }); toast('Automatic updates are on.'); await load(); }
+  catch (e) { toast(e.message); }
+});
+
+load().catch((e) => { $('list').innerHTML = `<p class="muted" style="padding:12px">${esc(e.message)}</p>`; });
+</script>
+</body>
+</html>

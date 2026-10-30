@@ -1,0 +1,27 @@
+# Publishes to npm when you publish a GitHub release (tag it v1.0.0, v1.0.1, ...).
+# Uses npm trusted publishing: no npm token is stored anywhere, and npm shows a provenance
+# badge linking each version to the exact commit and workflow run that built it.
+# One-time setup: on npmjs.com, open the gettend package > Settings > Trusted publishing,
+# add GitHub Actions with this repository and the workflow file name "publish.yml".
+name: Publish to npm
+on:
+  release:
+    types: [published]
+permissions:
+  contents: read
+  id-token: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment: npm
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          registry-url: https://registry.npmjs.org
+      - run: npm install -g npm@latest
+      - run: npm test
+      - name: Check the tag matches package.json
+        run: test "v$(node -p "require('./package.json').version")" = "${{ github.event.release.tag_name }}"
+      - run: npm publish --provenance --access public

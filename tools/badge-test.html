@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Badge check</title>
+<!-- Every badge style in every state, on a light and a dark page. Open before each npm publish:
+     serve the package folder (e.g. `npx serve .`) and visit /tools/badge-test.html. -->
+<script type="module" src="../badge/tend-badge.js"></script>
+<style>
+body{margin:0;font:14px/1.5 system-ui,sans-serif}
+section{padding:24px}
+section.dark{background:#0E1512;color:#E4ECE6}
+h2{font-size:15px;margin:0 0 4px}
+.row{display:grid;grid-template-columns:140px repeat(3,auto);gap:20px;align-items:start;justify-content:start;padding:14px 0;border-top:1px solid #8884}
+.row b{font-weight:600}
+</style>
+</head>
+<body>
+<section class="light"><h2>Light page</h2></section>
+<section class="dark"><h2>Dark page</h2></section>
+<script type="module">
+// Example footprint files for each state, built in the page so nothing is fetched from anywhere.
+const day = 864e5, now = Date.now();
+const base = {
+  schema: 'tend/1', project: 'example', lastActive: new Date(now).toISOString(),
+  tokens: { total: 1.44e9 }, models: { 'claude-opus-5-5': 1e9, 'claude-sonnet-5-5': 4.4e8 },
+  footprint: { kwh: { low: 66, mid: 166, high: 415 }, co2Kg: { low: 23, mid: 58, high: 145 }, waterL: { low: 233, mid: 582, high: 1455 } },
+  method: { version: '2026-10' },
+};
+const funded = (daysAgo, share) => ({ multiplier: 1, co2Kg: 58 * share, waterL: 582 * share, settledThrough: new Date(now - daysAgo * day).toISOString(),
+  lastFunded: new Date(now - daysAgo * day).toISOString(), receiptUrl: 'https://example.com/certificate' });
+const states = [
+  ['No purchase', base],
+  ['Restored', { ...base, restored: funded(5, 1) }],
+  ['Grace window', { ...base, restored: funded(10, 0.8) }],
+  ['Partial', { ...base, restored: funded(45, 0.74) }],
+];
+const url = (d) => URL.createObjectURL(new Blob([JSON.stringify(d)], { type: 'application/json' }));
+for (const section of document.querySelectorAll('section')) {
+  for (const [name, data] of states) {
+    const row = document.createElement('div');
+    row.className = 'row';
+    const src = url(data);
+    row.innerHTML = `<b>${name}</b>` + ['pill', 'label', 'stub'].map((v) => `<tend-badge src="${src}" variant="${v}"></tend-badge>`).join('');
+    section.append(row);
+  }
+}
+</script>
+</body>
+</html>

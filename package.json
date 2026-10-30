@@ -1,0 +1,43 @@
+{
+  "name": "gettend",
+  "version": "1.0.0",
+  "description": "See the energy, carbon and water behind your Claude Code tokens, and settle it with carbon removal and watershed restoration.",
+  "type": "module",
+  "bin": {
+    "gettend": "bin/tend.mjs",
+    "tend": "bin/tend.mjs"
+  },
+  "files": [
+    "bin",
+    "lib",
+    "ui",
+    "badge",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "ai",
+    "carbon",
+    "footprint",
+    "claude-code",
+    "sustainability",
+    "carbon-removal",
+    "water"
+  ],
+  "homepage": "https://gettend.eco",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/get-tend/tend.git"
+  },
+  "bugs": {
+    "url": "https://github.com/get-tend/tend/issues"
+  },
+  "author": "Nisa Andrews",
+  "license": "MIT",
+  "scripts": {
+    "test": "node --test"
+  }
+}
