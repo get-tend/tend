@@ -69,7 +69,20 @@ html{overflow-x:clip}
 .say{max-width:52ch;color:var(--muted);font-size:19px;margin-top:20px}
 
 /* top bar */
-.top{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-block:22px}
+/* The nav stays at the top as the page scrolls; once there's content under it, it eases into a floating glass bar. */
+.site-top{position:sticky;top:0;z-index:50;padding-top:env(safe-area-inset-top,0px)}
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px}
+.site-top .bar{max-width:1180px;height:78px;margin:0 auto;padding:0 max(16px,env(safe-area-inset-left,0px));border:1px solid transparent;border-radius:999px;
+  transition:max-width .35s cubic-bezier(.22,1,.36,1),height .35s cubic-bezier(.22,1,.36,1),margin .35s cubic-bezier(.22,1,.36,1),padding .35s cubic-bezier(.22,1,.36,1),background-color .3s,border-color .3s,box-shadow .3s}
+.site-top.scrolled .bar{max-width:min(1120px,calc(100% - 24px));height:56px;margin-top:10px;padding:0 10px 0 12px;
+  background:color-mix(in srgb,var(--paper) 72%,transparent);border-color:color-mix(in srgb,var(--line) 75%,transparent);
+  box-shadow:0 1px 0 rgba(255,255,255,.35) inset,0 14px 34px -18px rgba(19,32,26,.35);
+  -webkit-backdrop-filter:blur(16px) saturate(1.5);backdrop-filter:blur(16px) saturate(1.5)}
+.site-top .logo b{transition:width .35s cubic-bezier(.22,1,.36,1),height .35s cubic-bezier(.22,1,.36,1)}
+.site-top.scrolled .logo b{width:30px;height:30px}
+.site-top.scrolled .top ul{gap:22px}
+section[id],header[id]{scroll-margin-top:84px}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.site-top.scrolled .bar{background:var(--paper)}}
 .logo{display:flex;align-items:center;gap:10px;font:800 20px var(--display);letter-spacing:-.02em;text-decoration:none}
 .logo b{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;background:var(--ink);color:var(--bg);font:600 13px var(--mono)}
 .top ul{display:flex;gap:26px;list-style:none;margin:0;padding:0;font-size:14px;color:var(--muted)}
@@ -345,8 +358,8 @@ fieldset[aria-invalid="true"] .chip span{border-color:color-mix(in srgb,var(--st
 </style>
 </head>
 <body>
-<div class="wrap">
-  <nav class="top">
+<header class="site-top" id="siteTop">
+  <nav class="top bar" aria-label="Main">
     <a class="logo" href="#top"><b>t.</b>Tend</a>
     <ul>
       <li><a href="#how">How it works</a></li>
@@ -356,6 +369,8 @@ fieldset[aria-invalid="true"] .chip span{border-color:color-mix(in srgb,var(--st
       <li><a href="#pricing">Pricing</a></li>
     </ul>
   </nav>
+</header>
+<div class="wrap">
 
   <header class="hero" id="top">
     <div>
@@ -807,6 +822,11 @@ fetch('/api/total').then(r=>r.ok?r.json():null).then(t=>{
   $('cL').textContent=t.waterL>=1e6?(t.waterL/1e6).toFixed(1)+' million L':Math.round(t.waterL).toLocaleString('en-US')+' L';
   $('community').hidden=false;
 }).catch(()=>{});
+
+// The nav turns into a floating glass bar once the page scrolls under it.
+const siteTop=$('siteTop');
+const onScroll=()=>siteTop.classList.toggle('scrolled',scrollY>8);
+addEventListener('scroll',onScroll,{passive:true});onScroll();
 
 // Jump links glide to their section; with reduced motion they jump straight there.
 document.querySelectorAll('a[href^="#"]').forEach(a=>a.addEventListener('click',e=>{
